@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useCart } from "../context/CartContext";
 
 export default function HomePage() {
   // ----- Ads -----
@@ -83,6 +84,8 @@ export default function HomePage() {
     fetchProducts();
   }, []);
 
+  const { addToCart } = useCart();
+
   return (
     <div>
       <ToastContainer position="top-right" autoClose={3000} />
@@ -144,7 +147,7 @@ export default function HomePage() {
                   className="flex flex-col items-center gap-2 hover:scale-105 transform transition"
                 >
                   <img
-                    src={`${import.meta.env.VITE_BACKEND_URL}${cat.imageUrl}`} // image from database
+                    src={`${import.meta.env.VITE_BACKEND_URL}${cat.imageUrl}`}
                     alt={cat.name}
                     className="w-full h-20 rounded-full object-cover shadow-md"
                   />
@@ -166,24 +169,36 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {products.map((p) => (
-              <div
-                key={p._id}
-                className="border rounded-lg overflow-hidden hover:shadow-lg transition cursor-pointer flex flex-col"
-              >
-                <img src={`${import.meta.env.VITE_BACKEND_URL}${p.productImgUrl}`} alt={p.productName} />
-                <div className="p-2 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700">{p.productName}</h3>
-                    <p className="text-sm font-semibold text-emerald-600">${p.productPrice}</p>
+              <Link to={`/product/${p._id}`} key={p._id} className="cursor-pointer">
+                <div className="border rounded-lg overflow-hidden hover:shadow-lg transition flex flex-col">
+                  <img
+                    src={`${import.meta.env.VITE_BACKEND_URL}${p.productImgUrl}`}
+                    alt={p.productName}
+                    className="w-full h-40 object-cover"
+                  />
+                  <div className="p-2 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700">{p.productName}</h3>
+                      <p className="text-sm font-semibold text-emerald-600">${p.productPrice}</p>
+                    </div>
+                    <button
+                      className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2 rounded transition"
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent Link navigation when clicking button
+                        addToCart({
+                          productId: p._id,
+                          quantity: 1,
+                          price: p.productPrice,
+                          name: p.productName,
+                          image: p.productImgUrl
+                        });
+                      }}
+                    >
+                      Add to Cart
+                    </button>
                   </div>
-                  <button
-                    className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2 rounded transition"
-                    onClick={() => toast.success(`${p.productName} added to cart!`)}
-                  >
-                    Add to Cart
-                  </button>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

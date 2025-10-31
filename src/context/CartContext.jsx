@@ -1,61 +1,87 @@
-// src/context/CartContext.jsx
-import React, { createContext, useContext, useState, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import axiosClient from "../api/axiosClient";
+import { toast } from "react-toastify";
 
-const CartContext = createContext(null);
+const CartContext = createContext();
 
-export function CartProvider({ children }) {
+export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  
+  const fetchCart = async () => {
+    try {
+      const res = await axiosClient.get("/cart");
+      if (res.data.success) setCart(res.data.cart.items);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-  // Add item to cart
-  const addToCart = (item) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === item.id || i._id === item._id);
-      if (existing) {
-        return prev.map((i) =>
-          i.id === item.id || i._id === item._id
-            ? { ...i, quantity: (i.quantity || 1) + (item.quantity || 1) }
-            : i
-        );
+  useEffect(() => { fetchCart(); }, []);
+
+  const addToCart = async (product) => {
+    try {
+      const res = await axiosClient.post("/cart", {
+        productId: product.productId,
+        quantity: product.quantity
+      });
+      if (res.data.success) {
+        setCart(res.data.cart.items);
+        setTotalPrice(res.data.cart.totalPrice);
+        toast.success(`${product.name} added to cart!`);
       }
-      return [...prev, { ...item, quantity: item.quantity || 1 }];
-    });
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add to cart");
+    }
   };
 
-  // Remove item completely
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((i) => i.id !== id && i._id !== id));
+  const removeFromCart = async (itemId) => {
+    try {
+      const res = await axiosClient.delete(`/carts/cart/${itemId}`);
+      if (res.data.success) {
+        setCart(res.data.cart.items);
+        setTotalPrice(res.data.cart.totalPrice);
+        toast.success("Item removed from cart");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove item");
+    }
   };
 
-  // Update quantity
-  const updateQuantity = (id, qty) => {
-    setCart((prev) =>
-      prev.map((i) =>
-        i.id === id || i._id === id ? { ...i, quantity: qty } : i
-      )
-    );
+  const updateQuantity = async (itemId, quantity) => {
+    try {
+      const res = await axiosClient.put(`/carts/cart`, { itemId, quantity });
+      if (res.data.success) {
+        setCart(res.data.cart.items);
+        setTotalPrice(res.data.cart.totalPrice);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update quantity");
+    }
   };
 
-  // Clear all cart
-  const clearCart = () => setCart([]);
-
-  // Calculate total price
-  const totalPrice = useMemo(
-    () => cart.reduce((sum, it) => sum + (it.price || 0) * (it.quantity || 1), 0),
-    [cart]
-  );
+  const clearCart = async () => {
+    try {
+      const res = await axiosClient.delete("/cart");
+      if (res.data.success) {
+        setCart([]);
+        setTotalPrice(0);
+        toast.success("Cart cleared");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to clear cart");
+    }
+  };
 
   return (
-    <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalPrice }}
-    >
+    <CartContext.Provider value={{ cart, totalPrice, addToCart, removeFromCart, updateQuantity, clearCart }}>
       {children}
     </CartContext.Provider>
   );
-}
+};
 
-// Hook
-export function useCart() {
-  const context = useContext(CartContext);
-  if (!context) throw new Error("useCart must be used inside a CartProvider");
-  return context;
-}
+export const useCart = () => useContext(CartContext);

@@ -46,26 +46,31 @@ export default function Login() {
     resolver: yupResolver(loginSchema),
   });
 
-  const onSubmit = async (data) => {
-    setLoading(true);
-    try {
-      const res = await axiosClient.post("/user/login", {
-        email: data.email.trim(),
-        password: data.password,
-      });
+const onSubmit = async (data) => {
+  setLoading(true);
+  try {
+    const res = await axiosClient.post("/user/login", {
+      email: data.email.trim(),
+      password: data.password,
+    });
+      console.log(email,password);
 
-      const { token, user } = res.data;
-      localStorage.setItem("token", token);
+    const { accessToken, refreshToken, message } = res.data;
 
-      toast.success(`Welcome, ${user.name}!`);
-      setTimeout(() => navigate("/"), 1500);
-    } catch (err) {
-      const message = err.response?.data?.message || "Login failed!";
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    localStorage.setItem("token", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+
+    toast.success(message);
+
+    setTimeout(() => navigate("/"), 1500);
+
+  } catch (err) {
+    const message = err.response?.data?.message || "Login failed!";
+    toast.error(message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex items-center justify-center py-20 bg-gradient-to-r from-emerald-400 via-emerald-600 to-emerald-400 animate-gradient-x">
