@@ -1,5 +1,5 @@
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
-
+import { Link, useNavigate } from "react-router-dom";
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-r from-emerald-700 to-emerald-500 text-white pt-12 pb-6 mt-16">
@@ -17,11 +17,11 @@ export default function Footer() {
         <div>
           <h2 className="text-lg font-semibold mb-3">Quick Links</h2>
           <ul className="space-y-2 text-gray-100">
-            <li><a href="#" className="hover:underline">Home</a></li>
-            <li><a href="#" className="hover:underline">About Us</a></li>
-            <li><a href="#" className="hover:underline">Shop</a></li>
-            <li><a href="#" className="hover:underline">Contact</a></li>
-            <li><a href="#" className="hover:underline">FAQs</a></li>
+            <li> <Link to="/" className="hover:underline" > Home </Link> </li>
+            <li> <Link to="/aboutUs" className="hover:underline"  > About Us </Link> </li>
+            <li> <Link to="/contact" className="hover:underline" > Contact </Link> </li>
+            <li> <Link to="/" className="hover:underline" > Shop </Link> </li>
+            <li> <Link to="/faqs" className="hover:underline" > FAQs </Link> </li>
           </ul>
         </div>
 
@@ -57,9 +57,9 @@ export default function Footer() {
         <div>
           <h2 className="text-lg font-semibold mb-3">About Our Shop</h2>
           <p className="text-sm text-gray-100 leading-relaxed">
-            MediCare is more than a pharmacy – it’s your health partner.  
-            We provide genuine medicines, wellness essentials, and baby care products  
-            with fast delivery and affordable pricing.  
+            MediCare is more than a pharmacy – it’s your health partner.
+            We provide genuine medicines, wellness essentials, and baby care products
+            with fast delivery and affordable pricing.
             Your well-being is our priority.
           </p>
         </div>

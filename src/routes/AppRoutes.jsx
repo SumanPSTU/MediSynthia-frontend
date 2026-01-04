@@ -10,6 +10,9 @@ import Profile from "../pages/Profile.jsx";
 import ForgotPassword from "../pages/ForgotPassword.jsx";
 import EmailVerify from "../pages/EmailVerify.jsx";
 import ErrorBoundary from '../pages/ErrorBoundary.jsx';
+import AboutUs from '../pages/AboutUs.jsx';
+import Contact from "../pages/Contact.jsx";
+import Faqs from "../pages/Faqs.jsx";
 
 export default function AppRoutes() {
   return (
@@ -25,6 +28,9 @@ export default function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/aboutUs" element={<AboutUs />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/faqs" element={<Faqs />} />
       </Routes>
     </ErrorBoundary>
   );
