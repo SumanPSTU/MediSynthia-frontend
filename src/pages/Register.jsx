@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,8 +8,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-hot-toast";
 
 // Validation schema using Yup
 const validationSchema = Yup.object().shape({
@@ -62,6 +62,11 @@ export default function RegisterPage() {
         autoClose: 2000,
       });
 
+      // Store the verification token for resending verification email
+      if (response.data.data && response.data.data.token) {
+        localStorage.setItem("verificationToken", response.data.data.token);
+      }
+
       setEmailSent(true);
       setUserEmail(data.email.trim());
 
@@ -83,7 +88,6 @@ export default function RegisterPage() {
         position: "top-right",
         autoClose: 3000,
       });
-      console.error("Registration failed:", message);
     } finally {
       setLoading(false);
     }
@@ -91,7 +95,6 @@ export default function RegisterPage() {
 
   return (
     <div className="flex items-center justify-center py-20 bg-gradient-to-r from-emerald-400 via-emerald-600 to-emerald-400 animate-gradient-x">
-      <ToastContainer />
       <div className="bg-white bg-opacity-20 backdrop-blur-lg rounded-3xl shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden">
         {/* Left Illustration */}
         <div className="md:flex-1 hidden md:flex flex-col items-center justify-center p-10 bg-emerald-700">
@@ -244,12 +247,21 @@ export default function RegisterPage() {
                   ✅ A verification email has been sent to <strong>{userEmail}</strong>.
                 </p>
                 <p className="mt-2">
-                  Didn’t receive it?{" "}
+                  Didn't receive it?{" "}
                   <button
                     className="text-emerald-600 font-semibold hover:underline"
                     onClick={async () => {
                       try {
-                        await axiosClient.post("/user/resend-verification", { email: userEmail });
+                        const token = localStorage.getItem("verificationToken");
+                        await axiosClient.post(
+                          "/user/resendverify",
+                          {},
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          }
+                        );
                         toast.success("Verification email resent", {
                           position: "top-right",
                           autoClose: 2000,
@@ -293,3 +305,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+

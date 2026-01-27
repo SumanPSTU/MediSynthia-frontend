@@ -6,7 +6,7 @@ const axiosClient = axios.create({
     "Content-Type": "application/json",
   },
 });
-
+ 
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -14,5 +14,15 @@ axiosClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Chat/Messenger API methods
+export const chatApi = {
+  // Send a message to admin
+  sendMessage: (data) => axiosClient.post('/api/chat/send', data),
+  // Get user's chat messages with admin
+  getMessages: () => axiosClient.get('/api/chat/messages/admin'),
+  // Get unread message count
+  getUnreadCount: () => axiosClient.get('/api/chat/unread-count'),
+};
 
 export default axiosClient;

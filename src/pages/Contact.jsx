@@ -6,6 +6,7 @@ import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 import {
   FaPhoneAlt,
@@ -35,15 +36,83 @@ const ContactUs = () => {
   });
 
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState(null);
+
+  // Check login status and get user data on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && token !== "null" && token !== "undefined") {
+      setIsLoggedIn(true);
+      // Decode JWT to get user data
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUserData({
+          id: payload.id,
+          email: payload.email || '',
+        });
+      } catch (e) {
+        console.warn('Could not decode token');
+      }
+    }
+  }, []);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccess(true);
-    setForm({ name: "", email: "", subject: "", message: "" });
-    setTimeout(() => setSuccess(false), 3000);
+    setLoading(true);
+    setError("");
+
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Please login to send a message");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Decode JWT to get user ID
+      let userId = null;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        userId = payload.id;
+      } catch (decodeErr) {
+        console.warn('Could not decode token:', decodeErr);
+      }
+
+      const payload = {
+        ...form,
+        userId
+      };
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL || "http://localhost:8080"}/contact`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess(true);
+        setForm({ name: "", email: "", subject: "", message: "" });
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(response.data.message || "Failed to send message");
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to send message. Please try again."
+      );
+      console.error("Contact form error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -122,44 +191,99 @@ const ContactUs = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Full Name"
-                required
-                className="w-full p-4 rounded-xl border focus:ring-2 focus:ring-emerald-500 outline-none"
-              />
-              <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="Email Address"
-                required
-                className="w-full p-4 rounded-xl border focus:ring-2 focus:ring-emerald-500 outline-none"
-              />
-              <input
-                name="subject"
-                value={form.subject}
-                onChange={handleChange}
-                placeholder="Subject"
-                className="w-full p-4 rounded-xl border focus:ring-2 focus:ring-emerald-500 outline-none"
-              />
-              <textarea
-                name="message"
-                value={form.message}
-                onChange={handleChange}
-                placeholder="Write your message..."
-                rows="5"
-                required
-                className="w-full p-4 rounded-xl border focus:ring-2 focus:ring-emerald-500 outline-none"
-              />
-              <button className="w-full bg-emerald-600 text-white py-4 rounded-xl font-semibold hover:bg-emerald-700 transition">
-                Send Message
-              </button>
-            </form>
+            {error && (
+              <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6">
+                {error}
+              </div>
+            )}
+
+            {!isLoggedIn ? (
+              <div className="text-center py-8">
+                <div className="mb-4">
+                  <FaEnvelope className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-600 mb-4">You need to be logged in to send us a message</p>
+                </div>
+                <div className="flex gap-4 justify-center">
+                  <Link
+                    to="/login"
+                    className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-6 py-2 border border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50 transition font-medium"
+                  >
+                    Register
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Full Name"
+                  required
+                  className="w-full p-4 rounded-xl border focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="Email Address"
+                  required
+                  className="w-full p-4 rounded-xl border focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+                <input
+                  name="subject"
+                  value={form.subject}
+                  onChange={handleChange}
+                  placeholder="Subject"
+                  className="w-full p-4 rounded-xl border focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+                <textarea
+                  name="message"
+                  value={form.message}
+                  onChange={handleChange}
+                  placeholder="Write your message..."
+                  rows="5"
+                  required
+                  className="w-full p-4 rounded-xl border focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-emerald-600 text-white py-4 rounded-xl font-semibold hover:bg-emerald-700 transition disabled:bg-emerald-400 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Sending...
+                    </span>
+                  ) : (
+                    "Send Message"
+                  )}
+                </button>
+              </form>
+            )}
           </div>
 
           {/* DEPARTMENTS */}

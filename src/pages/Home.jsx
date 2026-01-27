@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useCart } from "../context/CartContext";
+import { toast } from "react-hot-toast";
+import ProductCard from "../components/ProductCard";
+
+// Get backend URL from axiosClient configuration
+const BACKEND_URL = axiosClient.defaults.baseURL || "http://localhost:3000";
+const ITEMS_PER_PAGE = 12;
 
 export default function HomePage() {
   // ----- Ads -----
@@ -22,7 +25,6 @@ export default function HomePage() {
         toast.error(res.data.message || "Failed to fetch ads");
       }
     } catch (error) {
-      console.error(error);
       toast.error("Something went wrong while fetching ads!");
     }
   };
@@ -60,44 +62,109 @@ export default function HomePage() {
     fetchCategories();
   }, []);
 
-  // ----- Products -----
+  // ----- Products with Infinite Scroll -----
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const observerRef = useRef(null);
+  const loadMoreRef = useRef(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async (pageNum, isLoadMore = false) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
     try {
-      const res = await axiosClient.get("/product/getproduct?page=1&limit=12");
+      const res = await axiosClient.get(`/product/getproduct?page=${pageNum}&limit=${ITEMS_PER_PAGE}`);
+      
       if (res.data.success) {
-        setProducts(res.data.products);
+        const newProducts = res.data.products || [];
+        const total = res.data.totalProducts || 0;
+        const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+
+        setTotalProducts(total);
+        setHasMore(pageNum < totalPages);
+
+        if (isLoadMore) {
+          // Append new products to existing ones, avoiding duplicates
+          setProducts(prev => {
+            const existingIds = new Set(prev.map(p => p._id));
+            const uniqueNewProducts = newProducts.filter(p => !existingIds.has(p._id));
+            return [...prev, ...uniqueNewProducts];
+          });
+        } else {
+          setProducts(newProducts);
+        }
       } else {
-        toast.error(res.data.message || "Failed to fetch products");
+        // If response says no success, no more products
+        setHasMore(false);
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong while fetching products!");
+      // Handle 404 (no more products) gracefully
+      if (error.response?.status === 404) {
+        setHasMore(false);
+      } else {
+        toast.error("Something went wrong while fetching products!");
+      }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  };
-
-  useEffect(() => {
-    fetchProducts();
   }, []);
 
-  const { addToCart } = useCart();
+  // Initial fetch
+  useEffect(() => {
+    fetchProducts(1);
+  }, [fetchProducts]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (loading || loadingMore || !hasMore) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          setPage(prev => {
+            const nextPage = prev + 1;
+            fetchProducts(nextPage, true);
+            return nextPage;
+          });
+        }
+      },
+      {
+        root: null,
+        rootMargin: "100px",
+        threshold: 0.1
+      }
+    );
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [loading, loadingMore, hasMore, fetchProducts]);
 
   return (
     <div>
-      <ToastContainer position="top-right" autoClose={3000} />
-
       {/* -------------------- Hero Slider -------------------- */}
-      <div className="relative max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="relative max-w-full mx-auto px-4 sm:px-6 lg:px-8 lg:mt-8 mt-4">
         {ads?.length > 0 ? (
           <div className="relative overflow-hidden rounded-lg shadow-lg">
             <img
-              src={`${import.meta.env.VITE_BACKEND_URL}${ads[currentAd].addImgUrl}`}
+              src={`${BACKEND_URL}${ads[currentAd].addImgUrl}`}
               alt={ads[currentAd].addDescription || `Ad ${currentAd + 1}`}
-              className="w-full h-64 sm:h-96 object-cover transition-all duration-700"
+              className="w-full h-38 sm:h-76 lg:max-h-80 object-fill transition-all duration-700"
             />
             <button
               onClick={prevAd}
@@ -129,29 +196,27 @@ export default function HomePage() {
 
       {/* -------------------- Categories -------------------- */}
       <div>
-        <ToastContainer position="top-right" autoClose={3000} />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-          <h2 className="text-xl font-bold mb-4">Shop by Category</h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 mt-5">
+          <h2 className="text-xl font-bold mb-1">Shop by Category</h2>
 
           {loadingCategories ? (
             <p className="text-center text-gray-500">Loading categories...</p>
           ) : categories.length === 0 ? (
             <p className="text-center text-gray-500">No categories available</p>
           ) : (
-            <div className="flex flex-wrap gap-6 justify-center">
+            <div className="flex overflow-x-auto gap-9 py-4 px-4 scrollbar-hide min-w-0">
               {categories.map((cat) => (
                 <Link
                   to={`/products?category=${cat.name}`}
-                  key={cat._id} // use _id from database
-                  className="flex flex-col items-center gap-2 hover:scale-105 transform transition"
+                  key={cat._id}
+                  className="flex-shrink-0 flex flex-col items-center gap-2 hover:scale-105 transform transition"
                 >
                   <img
-                    src={`${import.meta.env.VITE_BACKEND_URL}${cat.imageUrl}`}
+                    src={`${BACKEND_URL}${cat.imageUrl}`}
                     alt={cat.name}
-                    className="w-full h-20 rounded-full object-cover shadow-md"
+                    className="w-20 h-20 rounded-full object-cover shadow-md"
                   />
-                  <span className="text-sm font-medium">{cat.name}</span>
+                  <span className="text-sm font-medium whitespace-nowrap">{cat.name}</span>
                 </Link>
               ))}
             </div>
@@ -159,60 +224,45 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* -------------------- Products -------------------- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+      {/* -------------------- Products with Infinite Scroll -------------------- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 mt-6">
         <h2 className="text-xl font-bold mb-4">Featured Products</h2>
+        
         {loading ? (
-          <p className="text-center text-gray-500">Loading products...</p>
+          <div className="flex items-center justify-center py-20">
+            <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
         ) : products.length === 0 ? (
           <p className="text-center text-gray-500">No products available</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {products.map((p) => (
-              <Link to={`/product/${p._id}`} key={p._id} className="cursor-pointer">
-                <div className="border rounded-lg overflow-hidden hover:shadow-lg transition flex flex-col">
-                  <img
-                    src={`${import.meta.env.VITE_BACKEND_URL}${p.productImgUrl}`}
-                    alt={p.productName}
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="p-2 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-700">{p.productName}</h3>
-                      <p className="text-sm font-semibold text-emerald-600">${p.productPrice}</p>
-                    </div>
-                    <button
-                      className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2 rounded transition"
-                      onClick={(e) => {
-                        e.preventDefault(); // Prevent Link navigation when clicking button
-                        addToCart({
-                          productId: p._id,
-                          quantity: 1,
-                          price: p.productPrice,
-                          name: p.productName,
-                          image: p.productImgUrl
-                        });
-                      }}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-5 md:gap-6">
+              {products.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))}
+            </div>
+
+            {/* Load More Trigger Element */}
+            <div ref={loadMoreRef} className="mt-8">
+              {loadingMore && (
+                <div className="flex items-center justify-center py-6">
+                  <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-3 text-gray-600">Loading more products...</span>
                 </div>
-              </Link>
-            ))}
-          </div>
+              )}
+              
+            {!hasMore && products.length > 0 && (
+              <div className="text-center py-6">
+                <p className="text-gray-500">
+                  All products loaded
+                </p>
+              </div>
+            )}
+            </div>
+          </>
         )}
       </div>
     </div>
   );
 }
 
-
-
-
-
-
-
-
-
-// I want you to rewrite my React HomePage component. Keep my existing hero ads slider, categories, and product layout. But for the product section, implement infinite scrolling like YouTube/Facebook: fetch products in batches of 30 from the backend, automatically load more when the user scrolls near the bottom, append new products to the list, and show a loader while fetching. Use TailwindCSS for styling and ensure the layout is responsive and polished. Also, make sure broken images show the product/ads name as a fallback.

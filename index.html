@@ -7,6 +7,17 @@
   </head>
   <body>
     <div id="root"></div>   <!-- 👈 must exist -->
+    <script>
+      // Prevent MetaMask connection warnings when extension is not installed
+      if (typeof window.ethereum === 'undefined') {
+        window.ethereum = {
+          isMetaMask: false,
+          request: () => Promise.reject(new Error('MetaMask not installed')),
+          on: () => {},
+          removeListener: () => {},
+        };
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

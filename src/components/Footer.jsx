@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-5 gap-10">
         {/* Column 1: Logo + About */}
         <div>
-          <h1 className="text-2xl font-bold mb-3">MediCare</h1>
+          <h1 className="text-2xl font-bold mb-3">MediSynthia</h1>
           <p className="text-sm text-gray-100">
             Your trusted online pharmacy delivering health & wellness products
             right at your doorstep.
@@ -80,7 +80,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <p className="text-gray-200">
-          © {new Date().getFullYear()} MediCare. All rights reserved.
+          © {new Date().getFullYear()} MediSynthia. All rights reserved.
         </p>
       </div>
     </footer>

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-hot-toast";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 
@@ -14,11 +13,6 @@ function EmailVerify() {
   // Extract token from URL if useParams fails
   const tokenFromUrl = location.pathname.split("/verify/")[1];
   const token = tokenFromParams || tokenFromUrl;
-
-  console.log("📌 Token from URL parsing:", tokenFromUrl);
-  console.log("🧩 Token from useParams:", tokenFromParams);
-  console.log("✅ Final token used for API:", token);
-  console.log("🌐 Current URL:", window.location.href);
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(null);
@@ -36,17 +30,13 @@ function EmailVerify() {
           },
         }
       );
-      //const response = await axios.get(`/api/verify-email?token=${token}`); // Check if this URL is correct
-  // ... handle success
 
-      console.log("📝 Verification response:", res.data);
       setData(res.data);
       setSuccess(true);
       toast.success("✨ Email verified successfully!", { autoClose: 2000 });
       setTimeout(() => navigate("/login"), 2500);
 
     } catch (err) {
-      console.error("❌ Verification error:", err.response || err); // err is not guaranteed to be an object with a 'response' property
       setSuccess(false);
       toast.error("Verification failed. Please try again.", { autoClose: 3000 });
     } finally {
@@ -60,7 +50,6 @@ function EmailVerify() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#dfe9f3] to-[#ffffff]">
-      <ToastContainer />
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

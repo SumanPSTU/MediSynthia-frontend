@@ -2,15 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Slider from "react-slick";
 import axiosClient from "../api/axiosClient";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { useCart } from "../context/CartContext";
+import ProductCard from "../components/ProductCard";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { FaBuilding } from "react-icons/fa";
 
+// Get backend URL from axiosClient configuration
+const BACKEND_URL = axiosClient.defaults.baseURL || "http://localhost:3000";
+
 export default function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [currentCategory, setCurrentCategory] = useState(null);
+  const [currentSubCategory, setCurrentSubCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedTab, setSelectedTab] = useState("description");
@@ -25,12 +31,9 @@ export default function ProductDetails() {
       const res = await axiosClient.get(`/product/getproduct/${id}`);
       if (res.data.success) {
         setProduct(res.data.product);
-
-        // Fetch related products by category
-        const relatedRes = await axiosClient.get(
-          `/product/getproduct?category=${res.data.product.category}&limit=10`
-        );
-        if (relatedRes.data.success) setRelatedProducts(relatedRes.data.products.filter(p => p._id !== id));
+        // Store current product's category and subcategory IDs
+        setCurrentCategory(res.data.product.category?._id || res.data.product.category);
+        setCurrentSubCategory(res.data.product.subCategory?._id || res.data.product.subCategory);
 
         // Simulate fetching reviews (replace with API if available)
         setReviews([
@@ -43,16 +46,40 @@ export default function ProductDetails() {
         toast.error(res.data.message || "Product not found");
       }
     } catch (err) {
-      console.error(err);
       toast.error("Failed to fetch product details");
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchRelatedProducts = async () => {
+    if (!currentCategory || !currentSubCategory || !product) return;
+    try {
+      const productNameParts = product.productName.trim().split(/\s+/);
+      const searchTerm = productNameParts[0].toLowerCase(); 
+      
+
+      
+      const relatedRes = await axiosClient.get(
+        `/product/getproduct?category=${currentCategory}&subCategory=${currentSubCategory}&search=${encodeURIComponent(searchTerm)}&exclude=${id}`
+      );
+      
+      if (relatedRes.data.success) {
+        setRelatedProducts(relatedRes.data.products);
+      }
+    } catch (err) {
+      setRelatedProducts([]);
+    }
+  };
+
   useEffect(() => {
     fetchProduct();
   }, [id]);
+
+  // Fetch related products when category/subcategory/product changes
+  useEffect(() => {
+    fetchRelatedProducts();
+  }, [currentCategory, currentSubCategory, product, id]);
 
   if (loading) return <p className="text-center mt-4">Loading...</p>;
   if (!product) return <p className="text-center mt-4">Product not found</p>;
@@ -68,30 +95,41 @@ export default function ProductDetails() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-      <ToastContainer position="top-right" autoClose={3000} />
-
       <div className="flex flex-col lg:flex-row gap-8">
         {/* ----- Left: Product Images & Tabs ----- */}
         <div className="lg:w-1/2 flex flex-col gap-4">
-          <Slider {...sliderSettings}>
-            {product.images && product.images.length > 0
-              ? product.images.map((img, idx) => (
-                <div key={idx}>
+          <div className="relative">
+            <Slider {...sliderSettings}>
+              {product.images && product.images.length > 0
+                ? product.images.map((img, idx) => (
+                  <div key={idx}>
+                    <img
+                      src={img?.startsWith('http') ? img : `${BACKEND_URL}${img}`}
+                      alt={`${product.productName} ${idx + 1}`}
+                      className="w-full h-96 object-cover rounded-lg shadow-md"
+                      onError={(e) => {
+                        e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="384" height="384" viewBox="0 0 384 384"><text x="50%" y="50%" text-anchor="middle" fill="%23ccc" font-size="24">${product.productName}</text></svg>`;
+                      }}
+                    />
+                  </div>
+                ))
+                : (
                   <img
-                    src={`${import.meta.env.VITE_BACKEND_URL}${img}`}
-                    alt={`${product.productName} ${idx + 1}`}
+                    src={product.productImgUrl?.startsWith('http') ? product.productImgUrl : `${BACKEND_URL}${product.productImgUrl}`}
+                    alt={product.productName}
                     className="w-full h-96 object-cover rounded-lg shadow-md"
+                    onError={(e) => {
+                      e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="384" height="384" viewBox="0 0 384 384"><text x="50%" y="50%" text-anchor="middle" fill="%23ccc" font-size="24">${product.productName}</text></svg>`;
+                    }}
                   />
-                </div>
-              ))
-              : (
-                <img
-                  src={`${import.meta.env.VITE_BACKEND_URL}${product.productImgUrl}`}
-                  alt={product.productName}
-                  className="w-full h-96 object-cover rounded-lg shadow-md"
-                />
-              )}
-          </Slider>
+                )}
+            </Slider>
+            {product.discountPercentage > 0 && (
+              <div className="absolute top-4 left-4 bg-red-600 text-white font-bold px-3 py-2 rounded-lg shadow-lg">
+                {Math.round(product.discountPercentage)}% OFF
+              </div>
+            )}
+          </div>
 
           {/* Supplier */}
           <div className="flex items-center gap-2 mt-2 text-gray-700">
@@ -124,7 +162,10 @@ export default function ProductDetails() {
                   <p>Generic: {product.productGeniric}</p>
                   <p>Strength: {product.strength}</p>
                   <p>Dose: {product.dose}</p>
-                  <p>Side Effects: {product.sideEffect}</p>
+                  <div>
+                    <p className="font-semibold">Side Effects:</p>
+                    <p>{product.sideEffect}</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -141,8 +182,36 @@ export default function ProductDetails() {
           <p className={`text-sm sm:text-base font-semibold ${product.isAvailable ? "text-green-600" : "text-red-600"}`}>
             {product.isAvailable ? "In Stock" : "Out of Stock"}
           </p>
-          <p className="text-red-600 text-sm sm:text-base">Side effects: {product.sideEffect}</p>
-          <p className="text-xl sm:text-2xl font-semibold text-emerald-600">${product.productPrice}</p>
+          <div>
+            <p className="text-red-600 text-sm sm:text-base mb-2">Side effects:</p>
+            <p className="text-gray-700 text-sm sm:text-base">{product.sideEffect}</p>
+          </div>
+          
+          {/* Pricing Section */}
+          <div className="border-t border-b py-4 my-4">
+            {product.discountPercentage > 0 ? (
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-gray-500 text-xs">Original Price</p>
+                  <p className="text-lg line-through text-gray-400">৳{product.productPrice}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs">Sale Price</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-emerald-600">
+                    ৳{(product.productPrice * (1 - product.discountPercentage / 100)).toFixed(2)}
+                  </p>
+                </div>
+                <div className="ml-auto">
+                  <p className="text-sm text-gray-500">Save</p>
+                  <p className="text-lg font-semibold text-red-600">
+                    ৳{(product.productPrice * product.discountPercentage / 100).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xl sm:text-2xl font-semibold text-emerald-600">৳{product.productPrice}</p>
+            )}
+          </div>
 
           {/* Quantity Selector */}
           <div className="flex items-center gap-3 mt-2">
@@ -182,25 +251,17 @@ export default function ProductDetails() {
       {/* ----- Related Products ----- */}
       <div className="mt-10">
         <h2 className="text-xl sm:text-2xl font-bold mb-4">Related Products</h2>
-        <div className="flex gap-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 py-2">
-          {relatedProducts.map((p) => (
-            <Link
-              to={`/product/${p._id}`}
-              key={p._id}
-              className="flex-none w-40 sm:w-48 bg-white border rounded-lg shadow hover:shadow-lg transition"
-            >
-              <img
-                src={`${import.meta.env.VITE_BACKEND_URL}${p.productImgUrl}`}
-                alt={p.productName}
-                className="w-full h-36 sm:h-44 object-cover rounded-t-lg"
-              />
-              <div className="p-2">
-                <p className="text-sm sm:text-base font-medium text-gray-700">{p.productName}</p>
-                <p className="text-sm sm:text-base font-semibold text-emerald-600">${p.productPrice}</p>
+        {relatedProducts.length > 0 ? (
+          <div className="flex gap-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 py-2 pb-4">
+            {relatedProducts.map((p) => (
+              <div key={p._id} className="flex-none w-40 sm:w-48">
+                <ProductCard product={p} showDiscountBadge={true} />
               </div>
-            </Link>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No related products found</p>
+        )}
       </div>
 
       {/* ----- Customer Reviews ----- */}
@@ -233,12 +294,3 @@ export default function ProductDetails() {
   );
 }
 
-
-
-
-
-
-// Image gallery – multiple product images with thumbnails.
-// Tabbed sections – Description, Reviews, Specifications.
-// Sticky Add to Cart panel for mobile.
-// Related products carousel at the bottom.

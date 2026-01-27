@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
   X,
@@ -7,18 +7,26 @@ import {
   User,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import UploadPrescriptionModal from "./UploadPrescriptionModal";
+import { useCart } from "../context/CartContext";
 
 export default function Navbar() {
+  const { cart } = useCart();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState({});
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [loadingCats, setLoadingCats] = useState(true);
+  const [loadingSubs, setLoadingSubs] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const categoriesRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -28,6 +36,17 @@ export default function Navbar() {
 
   // Default avatar
   const defaultAvatar = "https://i.pravatar.cc/40?img=68";
+
+  // Scroll categories left/right
+  const scrollCategories = (direction) => {
+    if (categoriesRef.current) {
+      const scrollAmount = 200;
+      categoriesRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // ✅ Fetch categories from backend
   const fetchCategories = async () => {
@@ -41,10 +60,30 @@ export default function Navbar() {
         setCategories([]);
       }
     } catch (err) {
-      console.error("Navbar category fetch error:", err);
       toast.error("Error fetching categories");
     } finally {
       setLoadingCats(false);
+    }
+  };
+
+  // ✅ Fetch subcategories for a specific category
+  const fetchSubcategories = async (categoryId) => {
+    if (subcategories[categoryId]) return; // Already loaded
+
+    setLoadingSubs(true);
+    try {
+      const res = await axiosClient.get(`/subcategory/by-category/${categoryId}`);
+      if (res.data.success) {
+        const subs = res.data.subCategories || res.data.subcategories || [];
+        setSubcategories(prev => ({
+          ...prev,
+          [categoryId]: subs
+        }));
+      }
+    } catch (err) {
+      // Silent catch - subcategories might not exist
+    } finally {
+      setLoadingSubs(false);
     }
   };
 
@@ -75,7 +114,23 @@ export default function Navbar() {
   };
 
   const onUploadSuccess = (prescription) => {
-    console.log("uploaded prescription:", prescription);
+    // Prescription uploaded successfully
+  };
+
+  // Handle mouse enter to show dropdown
+  const handleMouseEnter = (categoryId, event) => {
+    fetchSubcategories(categoryId);
+    
+    const rect = event.currentTarget.getBoundingClientRect();
+    setDropdownPosition({
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX
+    });
+    setActiveDropdown(categoryId);
+  };
+
+  const handleMouseLeave = () => {
+    setActiveDropdown(null);
   };
 
   const userImage = defaultAvatar; // for demo
@@ -94,7 +149,7 @@ export default function Navbar() {
               to="/"
               className="text-2xl font-extrabold text-emerald-600 hover:opacity-90"
             >
-              MediCare
+              MediSynthia
             </Link>
             <span className="text-sm text-gray-500 hidden lg:inline">
               Trusted pharmacy & health store
@@ -136,20 +191,22 @@ export default function Navbar() {
               className="relative p-2 rounded-md hover:bg-gray-100"
             >
               <ShoppingCart className="w-6 h-6 text-gray-700" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                3
-              </span>
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {cart.length}
+                </span>
+              )}
             </Link>
 
             {/* Desktop */}
             {isLoggedIn ? (
-              <button className="p-0">
-                <img
-                  src={defaultAvatar}
-                  alt="profile"
-                  className="w-9 h-9 rounded-full border-2 border-emerald-600 object-cover"
-                />
-              </button>
+              <Link to="/profile">
+              <img
+                src={defaultAvatar}
+                alt="profile"
+                className="w-9 h-9 rounded-full border-2 border-emerald-600 object-cover cursor-pointer hover:opacity-90 transition"
+              />
+              </Link>
             ) : (
               <Link
                 to="/login"
@@ -161,47 +218,93 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Categories row */}
-        <div className="bg-emerald-50">
-          <div className="max-w-7xl mx-auto px-6 py-3 flex flex-wrap items-center gap-3 justify-center">
-            {loadingCats ? (
-              <span className="text-gray-500 text-sm">Loading categories...</span>
-            ) : categories.length === 0 ? (
-              <span className="text-gray-500 text-sm">No categories</span>
-            ) : (
-              categories.map((cat) => (
-                <div key={cat._id} className="relative group">
-                  <Link
-                    to={`/products?category=${encodeURIComponent(cat.name)}`}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-emerald-100 transition text-sm font-medium"
-                  >
-                    <span>{cat.name}</span>
-                    {cat.subcategories?.length ? (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    ) : null}
-                  </Link>
+        {/* Categories row with scroll buttons */}
+        <div className="relative bg-emerald-50">
+          {/* Left Scroll Button */}
+          <button
+            onClick={() => scrollCategories('left')}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-1 hover:bg-gray-100 transition hidden md:block"
+            style={{ marginLeft: '0.5rem' }}
+          >
+            <ChevronLeft className="w-5 h-5 text-emerald-600" />
+          </button>
 
-                  {cat.subcategories?.length ? (
-                    <div className="absolute left-0 top-full mt-2 w-56 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all">
-                      <div className="py-2">
-                        {cat.subcategories.map((s, i) => (
-                          <Link
-                            key={i}
-                            to={`/products?category=${encodeURIComponent(
-                              cat.name
-                            )}&sub=${encodeURIComponent(s)}`}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
-                          >
-                            {s}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ))
-            )}
+          {/* Right Scroll Button */}
+          <button
+            onClick={() => scrollCategories('right')}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-1 hover:bg-gray-100 transition hidden md:block"
+            style={{ marginRight: '0.5rem' }}
+          >
+            <ChevronRight className="w-5 h-5 text-emerald-600" />
+          </button>
+
+          {/* Categories Container */}
+          <div
+            ref={categoriesRef}
+            className="overflow-x-auto scrollbar-hide mx-10"
+          >
+            <div className="flex items-center gap-3 py-3 min-w-max px-4">
+              {loadingCats ? (
+                <span className="text-gray-500 text-sm">Loading categories...</span>
+              ) : categories.length === 0 ? (
+                <span className="text-gray-500 text-sm">No categories</span>
+              ) : (
+                categories.map((cat) => (
+                  <div
+                    key={cat._id}
+                    className="relative flex-shrink-0"
+                    onMouseEnter={(e) => handleMouseEnter(cat._id, e)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <Link
+                      to={`/products?category=${encodeURIComponent(cat.name)}`}
+                      className="flex items-center gap-1 px-3 py-2 rounded-md text-gray-700 hover:bg-emerald-100 transition text-sm font-medium whitespace-nowrap"
+                    >
+                      <span>{cat.name}</span>
+                      {(subcategories[cat._id] && subcategories[cat._id].length > 0) || loadingSubs ? (
+                        <ChevronDown className="w-3 h-3 text-gray-500" />
+                      ) : null}
+                    </Link>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
+
+          {/* Fixed Dropdown Overlay */}
+          {activeDropdown && subcategories[activeDropdown] && subcategories[activeDropdown].length > 0 && (
+            <div
+              className="fixed bg-white border rounded-lg shadow-xl z-50"
+              style={{
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                minWidth: '200px'
+              }}
+              onMouseEnter={() => setActiveDropdown(activeDropdown)}
+              onMouseLeave={handleMouseLeave}
+            >
+              <div className="py-2">
+                {subcategories[activeDropdown].map((sub) => {
+                  const cat = categories.find(c => c._id === activeDropdown);
+                  return (
+                    <Link
+                      key={sub._id}
+                      to={`/products?category=${encodeURIComponent(
+                        cat?.name || ''
+                      )}&sub=${encodeURIComponent(sub.name)}`}
+                      className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
+                      onClick={() => {
+                        setActiveDropdown(null);
+                        setMobileMenu(false);
+                      }}
+                    >
+                      {sub.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -219,27 +322,30 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <Link to="/cart" className="relative">
               <ShoppingCart className="w-6 h-6 text-gray-700" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
-                2
-              </span>
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                  {cart.length}
+                </span>
+              )}
             </Link>
 
             {/* Mobile */}
-            {isLoggedIn ?
-              (
-                <Link
-                  to="/login"
-                  className="w-full px-3 py-1 rounded-md bg-emerald-600 text-white text-center hover:bg-emerald-700 transition text-base font-medium"
-                >
-                  Login
-                </Link>
-              ) : (
+            {isLoggedIn ? (
+              <Link to="/profile">
                 <img
                   src={defaultAvatar}
                   alt="profile"
                   className="w-8 h-8 rounded-full border-2 border-emerald-600 object-cover"
                 />
-              )}
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="w-full px-3 py-1 rounded-md bg-emerald-600 text-white text-center hover:bg-emerald-700 transition text-base font-medium"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
 
@@ -296,37 +402,38 @@ export default function Navbar() {
                 ) : (
                   categories.map((cat) => {
                     const open = expandedCategory === cat._id;
+                    const catSubcategories = subcategories[cat._id] || [];
                     return (
                       <div key={cat._id} className="mb-2">
                         <button
-                          onClick={() =>
-                            setExpandedCategory(open ? null : cat._id)
-                          }
+                          onClick={() => {
+                            setExpandedCategory(open ? null : cat._id);
+                            if (!open) fetchSubcategories(cat._id);
+                          }}
                           className="w-full flex items-center justify-between px-2 py-2 rounded-md hover:bg-emerald-50"
                         >
                           <span className="text-gray-700 font-medium">
                             {cat.name}
                           </span>
-                          {cat.subcategories?.length ? (
+                          {(catSubcategories.length > 0 || loadingSubs) && (
                             <ChevronRight
-                              className={`w-5 h-5 text-gray-500 transition-transform ${open ? "rotate-90" : ""
-                                }`}
+                              className={`w-5 h-5 text-gray-500 transition-transform ${open ? "rotate-90" : ""}`}
                             />
-                          ) : null}
+                          )}
                         </button>
 
-                        {open && cat.subcategories?.length && (
+                        {open && catSubcategories.length > 0 && (
                           <div className="mt-2 ml-3 space-y-1">
-                            {cat.subcategories.map((s, k) => (
+                            {catSubcategories.map((sub) => (
                               <Link
-                                key={k}
+                                key={sub._id}
                                 to={`/products?category=${encodeURIComponent(
                                   cat.name
-                                )}&sub=${encodeURIComponent(s)}`}
+                                )}&sub=${encodeURIComponent(sub.name)}`}
                                 onClick={() => setMobileMenu(false)}
                                 className="block px-2 py-1 text-gray-600 hover:text-emerald-700"
                               >
-                                {s}
+                                {sub.name}
                               </Link>
                             ))}
                           </div>
