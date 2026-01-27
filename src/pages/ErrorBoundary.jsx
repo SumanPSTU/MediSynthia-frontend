@@ -13,7 +13,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("Caught by ErrorBoundary:", error, errorInfo);
+    // Silent catch - error is handled by the fallback UI
   }
 
   // Method to reset the error

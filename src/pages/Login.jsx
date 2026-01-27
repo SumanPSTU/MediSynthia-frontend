@@ -31,10 +31,9 @@ export default function Login() {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      console.log("Logged in with Google:", user);
       // Optional: send user info to your backend to create session or JWT
     } catch (error) {
-      console.error("Google login error:", error);
+      // Silent catch - Google login error handled gracefully
     }
   };
 
@@ -53,7 +52,6 @@ const onSubmit = async (data) => {
       email: data.email.trim(),
       password: data.password,
     });
-      console.log(email,password);
 
     const { accessToken, refreshToken, message } = res.data;
 

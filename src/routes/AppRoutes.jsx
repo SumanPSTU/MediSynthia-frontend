@@ -4,6 +4,7 @@ import Products from "../pages/Products.jsx";
 import ProductDetails from "../pages/ProductDetails.jsx";
 import Cart from "../pages/Cart.jsx";
 import Checkout from "../pages/Checkout.jsx";
+import Confirmation from "../pages/Confirmation.jsx";
 import Login from "../pages/Login.jsx";
 import Register from "../pages/Register.jsx";
 import Profile from "../pages/Profile.jsx";
@@ -23,6 +24,7 @@ export default function AppRoutes() {
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetails />} />        
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/login" element={<Login />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/register" element={<Register />} />
