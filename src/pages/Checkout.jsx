@@ -64,6 +64,7 @@ export default function CheckoutPage() {
     };
     fetchUserInfo();
   }, []);
+  
 
   // Calculate totals
   const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -165,7 +166,7 @@ export default function CheckoutPage() {
           paymentMethod: "cash_on_delivery",
           items: selectedItems
         };
-        clearCart();
+        
         setShowConfirm(false);
         toast.success("Order placed successfully!");
         navigate("/confirmation", { state: { orderDetails } });
