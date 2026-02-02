@@ -33,12 +33,12 @@ export default function Profile() {
       // Clear localStorage first to ensure immediate logout
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
-      
+
       // Call logout API (optional - user is already logged out locally)
       await axiosClient.post("/user/logout").catch(() => {
         // Ignore API errors since we're clearing localStorage anyway
       });
-      
+
       toast.success("Logged out successfully");
       navigate("/login", { replace: true });
     } catch (err) {
@@ -358,8 +358,8 @@ export default function Profile() {
             >
               <LogOut className="w-4 h-4" />
               Logout
-            </button>          
-            </div>
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -910,7 +910,7 @@ function OrdersTab({ user }) {
 
       <div className="divide-y">
         {orders.map((order) => (
-          <div key={order._id} className="p-3 sm:p-4 lg:p-6 hover:bg-gray-50 transition-colors">
+          <div key={order._id} onClick={() => navigate(`/order/${order.orderId}`)} className="p-3 sm:p-4 lg:p-6 hover:bg-gray-50 transition-colors cursor-pointer">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -966,6 +966,9 @@ function OrdersTab({ user }) {
                 </p>
               </div>
             </div>
+            <p className="text-xs text-emerald-600 mt-1">
+              Click for more order details
+            </p>
           </div>
         ))}
       </div>

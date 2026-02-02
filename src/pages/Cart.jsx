@@ -1,13 +1,13 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import axiosClient from "../api/axiosClient";
 
 /**
  * Full cart page for detailed editing.
  * - Save for later feature (local only).
- * - Coupon, shipping, tax calc, total.
+ * - Shipping cost 120, total.
  * - Fully responsive layout for all screen sizes (mobile, tablet, desktop).
  */
 
@@ -15,30 +15,24 @@ import axiosClient from "../api/axiosClient";
 const BACKEND_URL = axiosClient.defaults.baseURL || "http://localhost:3000";
 
 export default function Cart() {
-  const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, fetchCart } = useCart();
   const [selected, setSelected] = useState(new Set());
-  const [coupon, setCoupon] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Reload cart data when navigating back to this page
+  useEffect(() => {
+    fetchCart();
+    setSelected(new Set());
+  }, [location.key, fetchCart]);
 
   const subtotal = useMemo(
     () => cart.filter(it => selected.has(it._id || it.id)).reduce((s, it) => s + Number(it.price || 0) * (it.quantity || 1), 0),
     [cart, selected]
   );
 
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const discount = appliedCoupon ? +(subtotal * (appliedCoupon.percent / 100)).toFixed(2) : 0;
-  const shipping = subtotal - discount >= 100 || subtotal === 0 ? 0 : 10;
-  const tax = +((subtotal - discount) * 0.05).toFixed(2);
-  const total = +(subtotal - discount + shipping + tax).toFixed(2);
-
-  const applyCoupon = () => {
-    const c = coupon.trim().toUpperCase();
-    if (!c) return;
-    if (c === "MEDI10") setAppliedCoupon({ code: c, percent: 10 });
-    else if (c === "SAVE20") setAppliedCoupon({ code: c, percent: 20 });
-    else alert("Invalid coupon (demo: MEDI10 or SAVE20)");
-    setCoupon("");
-  };
+  const shipping = 120;
+  const total = +(subtotal + shipping).toFixed(2);
 
   const toggleSelected = (itemId) => {
     setSelected(prev => {
@@ -190,10 +184,15 @@ export default function Cart() {
                               <Minus className="w-4 h-4 text-gray-600" />
                             </button>
                             <input
-                              type="text"
+                              type="number"
                               value={item.quantity || 1}
-                              readOnly
-                              className="w-10 md:w-12 text-center text-sm md:text-base font-medium bg-transparent outline-none"
+                              onChange={(e) => {
+                                const newQty = Math.max(1, parseInt(e.target.value) || 1);
+                                updateQuantity(item._id || item.id, newQty);
+                              }}
+                              min="1"
+                              className="w-14 md:w-12 text-center text-sm md:text-base font-medium bg-white border border-gray-200 rounded outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                              aria-label="Item quantity"
                             />
                             <button
                               onClick={() => updateQuantity(item._id || item.id, (item.quantity || 1) + 1)}
@@ -251,33 +250,6 @@ export default function Cart() {
             <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 sticky top-24">
               <h2 className="text-lg font-semibold mb-4 text-gray-800">Order Summary</h2>
 
-              {/* Coupon Input */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Have a coupon?
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={coupon}
-                    onChange={(e) => setCoupon(e.target.value)}
-                    placeholder="MEDI10 or SAVE20"
-                    className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={applyCoupon}
-                    className="px-4 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition text-sm font-medium whitespace-nowrap"
-                  >
-                    Apply
-                  </button>
-                </div>
-                {appliedCoupon && (
-                  <p className="text-xs text-emerald-600 mt-1">
-                    ✓ {appliedCoupon.code} applied ({appliedCoupon.percent}% off)
-                  </p>
-                )}
-              </div>
-
               {/* Summary Details */}
               <div className="space-y-3 text-sm text-gray-600 pb-4 border-b">
                 <div className="flex justify-between">
@@ -285,22 +257,8 @@ export default function Cart() {
                   <span className="font-medium text-gray-800">৳{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Discount</span>
-                  <span className="font-medium text-emerald-600">-৳{discount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span className="font-medium text-gray-800">
-                    {shipping === 0 ? (
-                      <span className="text-emerald-600">Free</span>
-                    ) : (
-                      `৳${shipping.toFixed(2)}`
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tax (5%)</span>
-                  <span className="font-medium text-gray-800">৳{tax.toFixed(2)}</span>
+                  <span className="font-medium text-gray-800">৳{shipping.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -331,15 +289,6 @@ export default function Cart() {
               >
                 ← Continue Shopping
               </button>
-
-              {/* Free Shipping Info */}
-              {subtotal - discount < 100 && subtotal > 0 && (
-                <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
-                  <p className="text-xs md:text-sm text-emerald-700 text-center">
-                    Add ৳{(100 - (subtotal - discount)).toFixed(2)} more for free shipping!
-                  </p>
-                </div>
-              )}
             </div>
           </aside>
         </div>

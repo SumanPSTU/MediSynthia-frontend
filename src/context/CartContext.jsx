@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axiosClient from "../api/axiosClient";
 import { toast } from "react-hot-toast";
 
@@ -8,7 +8,7 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -24,9 +24,9 @@ export const CartProvider = ({ children }) => {
         // User not authenticated, cart not loaded
       }
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchCart(); }, []);
+  useEffect(() => { fetchCart(); }, [fetchCart]);
 
   const addToCart = async (product) => {
     const token = localStorage.getItem("token");
@@ -107,7 +107,7 @@ export const CartProvider = ({ children }) => {
   };
 
   return (
-    <CartContext.Provider value={{ cart, totalPrice, addToCart, removeFromCart, updateQuantity, clearCart }}>
+    <CartContext.Provider value={{ cart, totalPrice, addToCart, removeFromCart, updateQuantity, clearCart, fetchCart }}>
       {children}
     </CartContext.Provider>
   );

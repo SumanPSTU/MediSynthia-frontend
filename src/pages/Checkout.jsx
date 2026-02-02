@@ -68,8 +68,8 @@ export default function CheckoutPage() {
 
   // Calculate totals
   const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.05;
-  const total = subtotal + tax;
+  const shipping = 120;
+  const total = subtotal + shipping;
 
   // Validate new address form
   const validateNewAddress = () => {
@@ -495,8 +495,8 @@ export default function CheckoutPage() {
                     <span className="font-semibold">৳{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-700 pb-2">
-                    <span>Tax (5%)</span>
-                    <span className="font-semibold">৳{tax.toFixed(2)}</span>
+                    <span>Shipping</span>
+                    <span className="font-semibold">৳{shipping.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg md:text-xl pt-3 border-t-2 border-emerald-200">
                     <span className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-600" />Total</span>
@@ -534,7 +534,7 @@ export default function CheckoutPage() {
               </div>
               <div className="border-t pt-4 space-y-2 text-sm md:text-base">
                 <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium">৳{subtotal.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Tax (5%)</span><span className="font-medium">৳{tax.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Shipping</span><span className="font-medium">৳{shipping.toFixed(2)}</span></div>
                 <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total</span><span className="text-emerald-600">৳{total.toFixed(2)}</span></div>
               </div>
             </div>

@@ -8,6 +8,7 @@ import Footer from "./components/Footer.jsx";
 import AppRoutes from "./routes/AppRoutes.jsx";
 import ChatButton from "./components/ChatButton.jsx";
 import Messenger from "./pages/Messenger.jsx";
+import ScrollToTop from "./components/ScrollToTop.jsx";
 
 function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -19,6 +20,7 @@ function App() {
       }}>
       <div className="flex flex-col min-h-screen">
         <Toaster position="top-right" reverseOrder={false} />
+        <ScrollToTop />
         <Navbar />
         <main className="flex-grow pt-[var(--navbar-height)]">
           <AppRoutes />

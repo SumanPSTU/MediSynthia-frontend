@@ -8,6 +8,7 @@ import Confirmation from "../pages/Confirmation.jsx";
 import Login from "../pages/Login.jsx";
 import Register from "../pages/Register.jsx";
 import Profile from "../pages/Profile.jsx";
+import OrderDetails from "../pages/OrderDetails.jsx";
 import ForgotPassword from "../pages/ForgotPassword.jsx";
 import EmailVerify from "../pages/EmailVerify.jsx";
 import ErrorBoundary from '../pages/ErrorBoundary.jsx';
@@ -29,6 +30,7 @@ export default function AppRoutes() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/order/:orderId" element={<OrderDetails />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/aboutUs" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />

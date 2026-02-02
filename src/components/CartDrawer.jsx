@@ -40,8 +40,6 @@ export default function CartDrawer() {
   const { cart, addToCart, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [coupon, setCoupon] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [lastRemoved, setLastRemoved] = useState(null);
 
   const subtotal = useMemo(
@@ -52,28 +50,8 @@ export default function CartDrawer() {
     [cart, totalPrice]
   );
 
-  const discount = appliedCoupon
-    ? appliedCoupon.code === "MEDI10"
-      ? +(subtotal * 0.1).toFixed(2)
-      : appliedCoupon.code === "SAVE20"
-      ? +(subtotal * 0.2).toFixed(2)
-      : 0
-    : 0;
-
-  const shipping = subtotal - discount >= 100 || subtotal === 0 ? 0 : 10;
-  const tax = +((subtotal - discount) * 0.05).toFixed(2);
-  const total = +(subtotal - discount + shipping + tax).toFixed(2);
-
-  const applyCoupon = () => {
-    const code = coupon.trim().toUpperCase();
-    if (!code) return;
-    if (["MEDI10", "SAVE20"].includes(code)) {
-      setAppliedCoupon({ code, appliedAt: Date.now() });
-      setCoupon("");
-    } else {
-      alert("Invalid coupon (use MEDI10 or SAVE20)");
-    }
-  };
+  const shipping = 120;
+  const total = +(subtotal + shipping).toFixed(2);
 
   const handleRemove = (item) => {
     removeFromCart(item._id || item.id);
@@ -258,25 +236,9 @@ export default function CartDrawer() {
                 <span>Subtotal</span>
                 <span className="font-medium">৳{subtotal.toFixed(2)}</span>
               </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-emerald-600">
-                  <span>Discount</span>
-                  <span className="font-medium">-৳{discount.toFixed(2)}</span>
-                </div>
-              )}
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
-                <span className="font-medium">
-                  {shipping === 0 ? (
-                    <span className="text-emerald-600">Free</span>
-                  ) : (
-                    `৳${shipping.toFixed(2)}`
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Tax (5%)</span>
-                <span className="font-medium">৳{tax.toFixed(2)}</span>
+                <span className="font-medium">৳{shipping.toFixed(2)}</span>
               </div>
             </div>
 
