@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 
-export default function ChatButton({ isOpen, onClick }) {
+export default function ChatButton({ isOpen, onClick, unreadCount = 0 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [showPulse, setShowPulse] = useState(!isOpen);
 
@@ -71,10 +71,14 @@ export default function ChatButton({ isOpen, onClick }) {
             ) : (
               <div className="relative">
                 <MessageCircle className="w-7 h-7 text-white" />
-                {/* Notification dot */}
-                <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-white rounded-full shadow-md flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                </div>
+                {/* Unread message count badge */}
+                {unreadCount > 0 && (
+                  <div className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 rounded-full shadow-lg flex items-center justify-center animate-bounce">
+                    <span className="text-white text-xs font-bold">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>

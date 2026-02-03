@@ -10,7 +10,7 @@ import { Package, ShoppingBag, ChevronRight, Plus, MapPin, Truck, DollarSign, Ch
 const BACKEND_URL = axiosClient.defaults.baseURL || "http://localhost:3000";
 
 export default function CheckoutPage() {
-  const { clearCart } = useCart();
+  const { fetchCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const [step, setStep] = useState(1);
@@ -159,6 +159,19 @@ export default function CheckoutPage() {
       });
 
       if (res.data.success) {
+        const removeOrderedItemsFromCart = async () => {
+          const itemIds = selectedItems
+            .map(item => item._id || item.id)
+            .filter(Boolean);
+          if (itemIds.length === 0) return;
+
+          await Promise.allSettled(
+            itemIds.map(itemId => axiosClient.delete(`/cart/item/${itemId}`))
+          );
+          await fetchCart();
+        };
+
+        await removeOrderedItemsFromCart();
         const orderDetails = {
           orderId: res.data.order?.orderId || res.data.order?._id || `ORD${Date.now()}`,
           totalAmount: total,
@@ -495,7 +508,7 @@ export default function CheckoutPage() {
                     <span className="font-semibold">৳{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-700 pb-2">
-                    <span>Shipping</span>
+                    <span>Delivery charge</span>
                     <span className="font-semibold">৳{shipping.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg md:text-xl pt-3 border-t-2 border-emerald-200">
@@ -534,7 +547,7 @@ export default function CheckoutPage() {
               </div>
               <div className="border-t pt-4 space-y-2 text-sm md:text-base">
                 <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium">৳{subtotal.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Shipping</span><span className="font-medium">৳{shipping.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">Delivery charge</span><span className="font-medium">৳{shipping.toFixed(2)}</span></div>
                 <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total</span><span className="text-emerald-600">৳{total.toFixed(2)}</span></div>
               </div>
             </div>

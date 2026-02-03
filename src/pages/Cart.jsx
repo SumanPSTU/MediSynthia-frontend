@@ -4,14 +4,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import axiosClient from "../api/axiosClient";
 
-/**
- * Full cart page for detailed editing.
- * - Save for later feature (local only).
- * - Shipping cost 120, total.
- * - Fully responsive layout for all screen sizes (mobile, tablet, desktop).
- */
-
-// Get backend URL from axiosClient configuration
 const BACKEND_URL = axiosClient.defaults.baseURL || "http://localhost:3000";
 
 export default function Cart() {
@@ -31,8 +23,8 @@ export default function Cart() {
     [cart, selected]
   );
 
-  const shipping = 120;
-  const total = +(subtotal + shipping).toFixed(2);
+  const shipping = selected.size > 0 ? 120 : 0;
+  const total = selected.size > 0 ? +(subtotal + shipping).toFixed(2) : 0;
 
   const toggleSelected = (itemId) => {
     setSelected(prev => {
@@ -257,7 +249,7 @@ export default function Cart() {
                   <span className="font-medium text-gray-800">৳{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Shipping</span>
+                  <span>Delivery charge</span>
                   <span className="font-medium text-gray-800">৳{shipping.toFixed(2)}</span>
                 </div>
               </div>

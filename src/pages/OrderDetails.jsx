@@ -598,7 +598,7 @@ export default function OrderDetails() {
                   <span className="font-medium text-gray-800">৳{order.totalAmount?.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
+                  <span className="text-gray-600">Delivery charge</span>
                   <span className="font-medium text-gray-800">৳120.00</span>
                 </div>
               </div>

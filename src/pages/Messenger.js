@@ -255,7 +255,6 @@ export default function Messenger({ isOpen, onClose }) {
     return groups;
   }, {});
 
-  const totalMessages = messages.length;
   const queuedCount = offlineQueue.length;
 
   if (!isOpen) return null;
@@ -273,18 +272,20 @@ export default function Messenger({ isOpen, onClose }) {
               <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-3 border-emerald-500 ${
                 isConnected ? "bg-green-400 animate-pulse" : "bg-gray-400"
               }`}></div>
+            </div>
             <div>
               <h3 className="text-white font-semibold text-lg">Support Team</h3>
               <p className="text-emerald-100 text-xs flex items-center gap-1">
                 {isConnected ? (
-                  <>Online • Fast response</>
+                  <>Online</>
                 ) : (
                   <span className="flex items-center gap-1">
-                    <WifiOff className="w-3 h-3" /> Offline mode
+                    <WifiOff className="w-3 h-3" /> Offline
                   </span>
                 )}
               </p>
             </div>
+          </div>
           <div className="flex items-center gap-2">
             <button 
               onClick={retryConnection}
@@ -308,20 +309,8 @@ export default function Messenger({ isOpen, onClose }) {
               <X className="w-5 h-5 text-white" />
             </button>
           </div>
-        
-        {/* Stats bar */}
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-emerald-500/30">
-          <div className="flex items-center gap-1">
-            <span className="text-emerald-100 text-xs">Messages:</span>
-            <span className="text-white text-sm font-medium">{totalMessages}</span>
-          </div>
-          {queuedCount > 0 && (
-            <div className="flex items-center gap-1">
-              <span className="text-emerald-100 text-xs">Queued:</span>
-              <span className="text-yellow-300 text-sm font-medium">{queuedCount}</span>
-            </div>
-          )}
         </div>
+      </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-gray-50 to-gray-100 chat-scroll">
@@ -349,6 +338,7 @@ export default function Messenger({ isOpen, onClose }) {
                 <div className="bg-white/80 backdrop-blur px-4 py-1.5 rounded-full shadow-sm border border-gray-200">
                   <span className="text-xs text-gray-500 font-medium">{date}</span>
                 </div>
+              </div>
               {msgs.map((msg, idx) => {
                 const isUser = msg.senderType === "user";
                 const isQueued = msg.queued || false;
@@ -387,7 +377,9 @@ export default function Messenger({ isOpen, onClose }) {
                             </span>
                           )}
                         </div>
+                      </div>
                     </div>
+                  </div>
                 );
               })}
             </div>

@@ -20,7 +20,7 @@ export const chatApi = {
   // Send a message to admin
   sendMessage: (data) => axiosClient.post('/api/chat/send', data),
   // Get user's chat messages with admin
-  getMessages: () => axiosClient.get('/api/chat/messages/admin'),
+  getMessages: (markAsRead = false) => axiosClient.get(`/api/chat/messages/admin?markAsRead=${markAsRead}`),
   // Get unread message count
   getUnreadCount: () => axiosClient.get('/api/chat/unread-count'),
 };

@@ -3,22 +3,54 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
 import { Send, X, User, RefreshCw, MessageCircle, WifiOff } from "lucide-react";
 import { chatApi } from "../api/axiosClient";
+import { toast } from "react-hot-toast";
 
 const STORAGE_KEY = "medisynthia_chat_messages";
 
-export default function Messenger({ isOpen, onClose }) {
+export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen }) {
   const [socket, setSocket] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [userId, setUserId] = useState("");
   const [adminId, setAdminId] = useState("admin");
   const [isConnected, setIsConnected] = useState(false);
+  const [isAdminOnline, setIsAdminOnline] = useState(false);
   const [sending, setSending] = useState(false);
-  const [connectionError, setConnectionError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [offlineQueue, setOfflineQueue] = useState([]);
+  const [unreadMessages, setUnreadMessages] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef(null);
+  const shownToastIdsRef = useRef(new Set());
+  const hasLoadedUnreadRef = useRef(false);
+  const initialUnreadCountRef = useRef(null);
+  const onChatOpenRef = useRef(onChatOpen);
+  const onNewMessageRef = useRef(onNewMessage);
   const token = localStorage.getItem("token");
+
+  // Clear messages when user logs out
+  useEffect(() => {
+    if (!token) {
+      setMessages([]);
+      setUnreadMessages([]);
+      setOfflineQueue([]);
+      setIsLoadingHistory(false);
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem("medisynthia_unread_messages");
+      localStorage.removeItem("medisynthia_unread_count");
+      localStorage.removeItem("medisynthia_offline_queue");
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+    }
+  }, [token, socket]);
+
+  // Update refs when props change
+  useEffect(() => {
+    onChatOpenRef.current = onChatOpen;
+    onNewMessageRef.current = onNewMessage;
+  }, [onChatOpen, onNewMessage]);
 
   // Load messages from localStorage
   useEffect(() => {
@@ -27,43 +59,68 @@ export default function Messenger({ isOpen, onClose }) {
       try {
         const parsed = JSON.parse(storedMessages);
         setMessages(parsed);
-      } catch (e) {
-      // Silent catch - localStorage parsing errors handled gracefully
+      } catch (e) { }
     }
-    }
-    
-    // Load offline queue
+
     const storedQueue = localStorage.getItem("medisynthia_offline_queue");
     if (storedQueue) {
       try {
         setOfflineQueue(JSON.parse(storedQueue));
-      } catch (e) {
-      // Silent catch - localStorage parsing errors handled gracefully
+      } catch (e) { }
     }
+
+    const storedUnreadCount = localStorage.getItem("medisynthia_unread_count");
+    if (storedUnreadCount !== null) {
+      const parsedCount = Number(storedUnreadCount);
+      if (!Number.isNaN(parsedCount)) {
+        initialUnreadCountRef.current = parsedCount;
+        if (onNewMessageRef.current && !isOpen && parsedCount > 0) {
+          onNewMessageRef.current(parsedCount);
+        }
+      }
+    }
+    const storedUnread = localStorage.getItem("medisynthia_unread_messages");
+    if (storedUnread) {
+      try {
+        const parsed = JSON.parse(storedUnread);
+        setUnreadMessages(parsed);
+        if (onNewMessageRef.current && !isOpen) {
+          onNewMessageRef.current(parsed.length);
+        }
+      } catch (e) { }
+      finally {
+        hasLoadedUnreadRef.current = true;
+      }
+    } else {
+      hasLoadedUnreadRef.current = true;
     }
   }, []);
 
-  // Save messages to localStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages]);
 
-  // Save offline queue
   useEffect(() => {
     if (offlineQueue.length > 0) {
       localStorage.setItem("medisynthia_offline_queue", JSON.stringify(offlineQueue));
     }
   }, [offlineQueue]);
 
+  useEffect(() => {
+    if (!hasLoadedUnreadRef.current) return;
+    localStorage.setItem("medisynthia_unread_messages", JSON.stringify(unreadMessages));
+    if (unreadMessages.length > 0) {
+      localStorage.setItem("medisynthia_unread_count", String(unreadMessages.length));
+      initialUnreadCountRef.current = unreadMessages.length;
+    }
+  }, [unreadMessages]);
+
   // Initialize socket connection
   const initializeSocket = useCallback(() => {
-    if (!isOpen) return;
+    if (!isOpen || !token) return;
 
-    setConnectionError(null);
-
-    // Use environment variable with fallback to port 8080
     const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
     const newSocket = io(BACKEND_URL, {
@@ -79,38 +136,32 @@ export default function Messenger({ isOpen, onClose }) {
 
     newSocket.on("connect", () => {
       setIsConnected(true);
-      setConnectionError(null);
       setRetryCount(0);
-      
+
       if (userId) {
         newSocket.emit("joinUser", userId);
+        newSocket.emit("checkAdminStatus");
       }
-      
-      // Send any queued messages
+
       sendQueuedMessages(newSocket);
     });
 
     newSocket.on("connect_error", (err) => {
       setIsConnected(false);
-      setConnectionError("Cannot connect to server. Please check if backend is running.");
     });
 
     newSocket.on("connect_timeout", () => {
-      setConnectionError("Connection timed out. Retrying...");
     });
 
     newSocket.on("disconnect", (reason) => {
       setIsConnected(false);
       if (reason === "io server disconnect") {
-        setConnectionError("Server disconnected you. Will attempt to reconnect.");
       }
     });
 
     newSocket.on("error", (error) => {
-      setConnectionError("Socket error: " + (error?.message || error));
     });
 
-    // Get user ID from token
     const getUserId = () => {
       try {
         if (token) {
@@ -124,21 +175,15 @@ export default function Messenger({ isOpen, onClose }) {
             }
           }
         }
-        const guestId = "guest_" + Date.now();
-        setUserId(guestId);
+        // No guest ID - user must be logged in to use messenger
+        setUserId("");
       } catch (error) {
-        const guestId = "guest_" + Date.now();
-        setUserId(guestId);
+        setUserId("");
       }
     };
 
-    // Get admin ID from environment or token
-    // The admin's ID is stored in the admin's JWT token
-    // We need to get it to send messages to the correct admin
     const getAdminId = async () => {
       try {
-        // First, try to get admin ID from backend or environment
-        // Check if there's a known admin ID in localStorage or environment
         const adminToken = localStorage.getItem('adminToken');
         if (adminToken) {
           const parts = adminToken.split(".");
@@ -151,27 +196,6 @@ export default function Messenger({ isOpen, onClose }) {
             }
           }
         }
-        
-        // Try to fetch admin info from backend
-        try {
-          const response = await fetch(`${BACKEND_URL}/api/admin/profile`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.admin && data.admin._id) {
-              setAdminId(data.admin._id);
-              return;
-            }
-          }
-        } catch (e) {
-          // Silent catch - will use default admin ID
-        }
-        
-        // Fallback to admin as string (this is the old behavior for backward compatibility)
-        // But we also need to keep 'admin' as fallback for existing messages
         setAdminId("admin");
       } catch (error) {
         setAdminId("admin");
@@ -181,34 +205,68 @@ export default function Messenger({ isOpen, onClose }) {
     getUserId();
     getAdminId();
 
-    // Listen for messages
     const handleReceiveMessage = (message) => {
+      let isAlreadyInMessages = false;
+
       setMessages((prev) => {
-        // Check if message already exists by _id
         if (prev.find((m) => m._id === message._id)) {
+          isAlreadyInMessages = true;
           return prev;
         }
-        // Remove temporary message if it matches this received message
-        const filtered = prev.filter(m => 
-          !(m.message === message.message && 
-            m.senderId === message.senderId && 
+        const filtered = prev.filter(m =>
+          !(m.message === message.message &&
+            m.senderId === message.senderId &&
             m._id.toString().startsWith('temp_'))
         );
         return [...filtered, message];
       });
+
+      if (isAlreadyInMessages) return;
+
+      const isFromAdmin = message.senderType === "admin" ||
+        (message.senderType !== "user" && message.senderId !== userId);
+
+      if (isFromAdmin) {
+        if (shownToastIdsRef.current.has(message._id)) return;
+
+        shownToastIdsRef.current.add(message._id);
+
+        setUnreadMessages(prev => {
+          if (prev.includes(message._id)) return prev;
+          return [...prev, message._id];
+        });
+
+        toast((t) => (
+          <div onClick={() => {
+            toast.dismiss(t.id);
+            if (onChatOpenRef.current) onChatOpenRef.current();
+          }} className="cursor-pointer">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-800">New message from Support</p>
+                <p className="text-sm text-gray-600 mt-1">{message.message?.substring(0, 50)}{message.message?.length > 50 ? '...' : ''}</p>
+              </div>
+            </div>
+          </div>
+        ), {
+          duration: 5000,
+          icon: '💬',
+        });
+      }
     };
 
     const handleMessageSent = (message) => {
       setSending(false);
       setMessages((prev) => {
-        // Remove temporary message with matching content
-        const filtered = prev.filter(m => 
-          !(m.message === message.message && 
-            m.senderId === message.senderId && 
+        const filtered = prev.filter(m =>
+          !(m.message === message.message &&
+            m.senderId === message.senderId &&
             m.senderType === message.senderType &&
             m._id.toString().startsWith('temp_'))
         );
-        // Check if real message already exists
         if (filtered.find((m) => m._id === message._id)) {
           return filtered;
         }
@@ -219,46 +277,133 @@ export default function Messenger({ isOpen, onClose }) {
     newSocket.on("receiveDirectMessage", handleReceiveMessage);
     newSocket.on("messageSent", handleMessageSent);
 
+    newSocket.on("adminOnline", () => {
+      setIsAdminOnline(true);
+    });
+
+    newSocket.on("adminOffline", () => {
+      setIsAdminOnline(false);
+    });
+
+    newSocket.on("adminStatus", (status) => {
+      setIsAdminOnline(status?.isOnline || false);
+    });
+
     setSocket(newSocket);
 
     return () => {
-      // Remove event listeners to prevent duplicates
       newSocket.off("receiveDirectMessage", handleReceiveMessage);
       newSocket.off("messageSent", handleMessageSent);
+      newSocket.off("adminOnline");
+      newSocket.off("adminOffline");
+      newSocket.off("adminStatus");
       if (newSocket && newSocket.connected) {
         newSocket.disconnect();
       }
     };
   }, [isOpen, token, userId]);
 
-  // Send queued messages when connected
+  const loadPreviousMessages = useCallback(async () => {
+    if (!token || !userId) return;
+    setIsLoadingHistory(true);
+    try {
+      // Pass markAsRead=true only when chat is open, false when just checking for unread
+      const response = await chatApi.getMessages(isOpen);
+      const apiMessages = response?.data?.messages;
+      if (Array.isArray(apiMessages)) {
+        // Find unread messages from admin (only messages explicitly marked as unread)
+        const unreadFromAdmin = apiMessages
+          .filter(m => {
+            const isFromAdmin = m.senderType === "admin" || m.senderId !== userId;
+            // Only count as unread if explicitly set to false (not undefined)
+            return isFromAdmin && m.read === false;
+          })
+          .map(m => m._id);
+
+        // Update unread state if chat is not open
+        if (!isOpen && unreadFromAdmin.length > 0) {
+          setUnreadMessages(unreadFromAdmin);
+          localStorage.setItem("medisynthia_unread_messages", JSON.stringify(unreadFromAdmin));
+          localStorage.setItem("medisynthia_unread_count", String(unreadFromAdmin.length));
+          if (onNewMessageRef.current) {
+            onNewMessageRef.current(unreadFromAdmin.length);
+          }
+        } else if (isOpen) {
+          // If chat is already open when loading, don't show unread
+          setUnreadMessages([]);
+        }
+
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((m) => m._id));
+          const normalized = apiMessages
+            .map((m) => ({
+              ...m,
+              senderType: m.senderType || (m.senderId === userId ? "user" : "admin"),
+              timestamp: m.timestamp || m.createdAt || new Date().toISOString(),
+            }))
+            .filter((m) => !existingIds.has(m._id));
+          if (normalized.length === 0) return prev;
+          return [...prev, ...normalized].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        });
+      }
+    } catch (error) {
+      // Silent fail to avoid blocking chat UI
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [token, userId, isOpen]);
+
   const sendQueuedMessages = useCallback((socket) => {
     if (!socket || offlineQueue.length === 0) return;
-    
+
     offlineQueue.forEach((msg, index) => {
       setTimeout(() => {
         socket.emit("sendDirectMessage", msg);
-      }, index * 500); // Send with delay
+      }, index * 500);
     });
-    
-    // Clear queue after sending
+
     setTimeout(() => {
       setOfflineQueue([]);
       localStorage.removeItem("medisynthia_offline_queue");
     }, offlineQueue.length * 500 + 500);
   }, [offlineQueue]);
 
-  // Connect when chat opens
   useEffect(() => {
     if (isOpen) {
       initializeSocket();
+      // Clear unread state immediately when opening chat
+      setUnreadMessages([]);
+      localStorage.removeItem("medisynthia_unread_messages");
+      localStorage.removeItem("medisynthia_unread_count");
+      if (onNewMessageRef.current) {
+        onNewMessageRef.current(0);
+      }
     }
   }, [isOpen, initializeSocket]);
 
-  // Scroll to bottom
+  // Load previous messages once userId is available
+  useEffect(() => {
+    if (userId && !isOpen) {
+      // Load messages on login to check for unread
+      loadPreviousMessages();
+    } else if (isOpen && userId) {
+      loadPreviousMessages();
+    }
+  }, [isOpen, userId, loadPreviousMessages]);
+
+  useEffect(() => {
+    if (!hasLoadedUnreadRef.current) return;
+    if (!isOpen && unreadMessages.length === 0 && (initialUnreadCountRef.current || 0) > 0) {
+      return;
+    }
+    if (onNewMessageRef.current && !isOpen) {
+      onNewMessageRef.current(unreadMessages.length);
+    }
+  }, [unreadMessages, isOpen]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isOpen]);
 
   const retryConnection = () => {
     setRetryCount(prev => prev + 1);
@@ -273,7 +418,7 @@ export default function Messenger({ isOpen, onClose }) {
 
   const sendMessage = useCallback((e) => {
     e.preventDefault();
-    
+
     const messageText = newMessage.trim();
     if (!messageText || !userId) return;
 
@@ -285,15 +430,12 @@ export default function Messenger({ isOpen, onClose }) {
     };
 
     if (isConnected && socket) {
-      // Send immediately if connected
       setSending(true);
       socket.emit("sendDirectMessage", messageData);
     } else {
-      // Queue message for later
       setOfflineQueue(prev => [...prev, messageData]);
     }
 
-    // Add temporary message for immediate feedback
     const tempId = "temp_" + Date.now();
     const tempMsg = {
       _id: tempId,
@@ -316,9 +458,9 @@ export default function Messenger({ isOpen, onClose }) {
   };
 
   const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: "2-digit", 
-      minute: "2-digit" 
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
 
@@ -340,31 +482,68 @@ export default function Messenger({ isOpen, onClose }) {
     return groups;
   }, {});
 
-  const totalMessages = messages.length;
-  const sentMessages = messages.filter(m => m.senderType === "user").length;
-  const queuedCount = offlineQueue.length;
-
   if (!isOpen) return null;
+
+  // Show login prompt if not authenticated
+  if (!token || !userId) {
+    return (
+      <div className="fixed bottom-24 right-6 w-[400px] h-[550px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 border border-gray-200 animate-slide-up">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-500 p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-white font-semibold text-lg">Support Team</h3>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center">
+            <MessageCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+            <h4 className="text-gray-800 font-semibold text-lg mb-2">Login Required</h4>
+            <p className="text-gray-600 text-sm mb-4">Please login to chat with our support team</p>
+            <button
+              onClick={() => {
+                onClose();
+                window.location.href = '/login';
+              }}
+              className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full hover:shadow-lg transition"
+            >
+              Login Now
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed bottom-24 right-6 w-[400px] h-[550px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 border border-gray-200 animate-slide-up">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-500 p-5">
+      <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
               </div>
-              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-3 border-emerald-500 ${
-                isConnected ? "bg-green-400 animate-pulse" : "bg-gray-400"
-              }`}></div>
+              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-3 border-emerald-500 ${isAdminOnline ? "bg-green-400 animate-pulse" : "bg-gray-400"
+                }`}></div>
             </div>
             <div>
               <h3 className="text-white font-semibold text-lg">Support Team</h3>
               <p className="text-emerald-100 text-xs flex items-center gap-1">
-                {isConnected ? (
-                  <>Online • Typically replies instantly</>
+                {isAdminOnline ? (
+                  <>Online</>
                 ) : (
                   <span className="flex items-center gap-1">
                     <WifiOff className="w-3 h-3" /> Offline
@@ -374,7 +553,7 @@ export default function Messenger({ isOpen, onClose }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={retryConnection}
               className="p-2 hover:bg-white/20 rounded-lg text-emerald-100 transition"
               title="Retry connection"
@@ -382,7 +561,7 @@ export default function Messenger({ isOpen, onClose }) {
               <RefreshCw className={`w-4 h-4 ${retryCount > 0 ? "animate-spin" : ""}`} />
             </button>
             {messages.length > 0 && (
-              <button 
+              <button
                 onClick={clearChat}
                 className="p-2 hover:bg-white/20 rounded-lg text-emerald-100 text-xs transition"
               >
@@ -397,20 +576,8 @@ export default function Messenger({ isOpen, onClose }) {
             </button>
           </div>
         </div>
-        
-        {/* Stats bar */}
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-emerald-500/30">
-          <div className="flex items-center gap-1">
-            <span className="text-emerald-100 text-xs">Messages:</span>
-            <span className="text-white text-sm font-medium">{totalMessages}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-emerald-100 text-xs">Queued:</span>
-            <span className={`text-sm font-medium ${queuedCount > 0 ? "text-yellow-300" : "text-white"}`}>
-              {queuedCount}
-            </span>
-          </div>
-        </div>
+
+
       </div>
 
       {/* Messages */}
@@ -422,22 +589,9 @@ export default function Messenger({ isOpen, onClose }) {
             </div>
             <h4 className="text-gray-800 font-semibold text-lg mb-2">Welcome! 👋</h4>
             <p className="text-gray-500 text-sm mb-4">How can we help you today?</p>
-            
-            {!isConnected && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <p className="text-amber-700 text-xs font-medium mb-2">
-                  {queuedCount > 0 ? "📤 Messages queued" : "⚠️ Server disconnected"}
-                </p>
-                {queuedCount > 0 ? (
-                  <p className="text-amber-600 text-xs">
-                    {queuedCount} message{queuedCount > 1 ? "s" : ""} will be sent when connection is restored
-                  </p>
-                ) : (
-                  <p className="text-amber-600 text-xs">
-                    Messages will be sent when connection is restored
-                  </p>
-                )}
-              </div>
+
+            {isLoadingHistory && (
+              <p className="text-gray-400 text-xs">Loading previous messages...</p>
             )}
           </div>
         ) : (
@@ -451,7 +605,7 @@ export default function Messenger({ isOpen, onClose }) {
               {msgs.map((msg, idx) => {
                 const isUser = msg.senderType === "user";
                 const isQueued = msg.queued || false;
-                
+
                 return (
                   <div
                     key={msg._id || idx}
@@ -459,23 +613,25 @@ export default function Messenger({ isOpen, onClose }) {
                   >
                     <div className={`max-w-[80%] ${isUser ? "order-2" : "order-1"}`}>
                       {!isUser && (
-                        <div className="flex items-end gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1">
                           <div className="w-7 h-7 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
                             <User className="w-4 h-4 text-white" />
                           </div>
-                          <span className="text-xs text-gray-400">Support</span>
+
+                          <span className="text-xs text-gray-400 leading-none">
+                            Support team
+                          </span>
                         </div>
                       )}
-                      
-                      <div className={`relative rounded-2xl px-4 py-3 ${
-                        isUser
-                          ? isQueued 
+
+                      <div className={`relative rounded-2xl px-4 py-3 ${isUser
+                          ? isQueued
                             ? "bg-gray-400 text-white rounded-br-sm"
                             : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-br-sm shadow-lg shadow-emerald-500/20"
                           : "bg-white text-gray-800 rounded-bl-sm shadow-lg border border-gray-100"
-                      }`}>
+                        }`}>
                         {msg.message && <p className="text-sm leading-relaxed">{msg.message}</p>}
-                        
+
                         <div className={`flex items-center gap-2 mt-1.5 ${isUser ? "justify-end" : "justify-start"}`}>
                           <span className={`text-xs ${isUser ? (isQueued ? "text-gray-200" : "text-emerald-100") : "text-gray-400"}`}>
                             {formatTime(msg.timestamp)}
@@ -512,11 +668,10 @@ export default function Messenger({ isOpen, onClose }) {
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className={`p-3 rounded-full transition-all duration-300 ${
-              newMessage.trim()
+            className={`p-3 rounded-full transition-all duration-300 ${newMessage.trim()
                 ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:shadow-lg hover:shadow-emerald-500/30"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             {sending ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -525,11 +680,6 @@ export default function Messenger({ isOpen, onClose }) {
             )}
           </button>
         </div>
-        {!isConnected && offlineQueue.length > 0 && (
-          <p className="text-xs text-amber-600 mt-2 text-center">
-            📤 {offlineQueue.length} message{offlineQueue.length > 1 ? "s" : ""} queued - will send automatically
-          </p>
-        )}
       </form>
     </div>
   );

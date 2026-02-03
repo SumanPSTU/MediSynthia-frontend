@@ -258,6 +258,77 @@ export default function ProductDetails() {
             <span className="font-medium">{product.productSuplier}</span>
           </div>
 
+          {/* Desktop purchase panel */}
+          <div className="hidden lg:block">
+            <div className="border-t border-b py-4 my-4">
+              {product.discountPercentage > 0 ? (
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="text-gray-500 text-xs">Original Price</p>
+                    <p className="text-lg line-through text-gray-400">৳{product.productPrice}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs">Sale Price</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-emerald-600">
+                      ৳{(product.productPrice * (1 - product.discountPercentage / 100)).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="ml-auto">
+                    <p className="text-sm text-gray-500">Save</p>
+                    <p className="text-lg font-semibold text-red-600">
+                      ৳{(product.productPrice * product.discountPercentage / 100).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xl sm:text-2xl font-semibold text-emerald-600">৳{product.productPrice}</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 mt-4 bg-gray-100 rounded-lg p-1 w-fit">
+              <button
+                className="w-9 h-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm transition"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => {
+                  const newQty = Math.max(1, parseInt(e.target.value) || 1);
+                  setQuantity(newQty);
+                }}
+                min="1"
+                className="w-12 text-center font-medium bg-white border border-gray-200 rounded outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                aria-label="Item quantity"
+              />
+              <button
+                className="w-9 h-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm transition"
+                onClick={() => setQuantity((q) => q + 1)}
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
+
+            <button
+              className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded transition-transform transform hover:scale-105"
+              onClick={() =>
+                addToCart({
+                  productId: product._id,
+                  quantity,
+                  price: product.productPrice,
+                  name: product.productName,
+                  image: product.productImgUrl,
+                })
+              }
+            >
+              Add to Cart
+            </button>
+          </div>
+
         </div>
 
         {/* ----- Right: Product Info ----- */}
@@ -276,7 +347,7 @@ export default function ProductDetails() {
           </div>
           
           {/* Pricing Section */}
-          <div className="border-t border-b py-4 my-4">
+          <div className="border-t border-b py-4 my-4 lg:hidden">
             {product.discountPercentage > 0 ? (
               <div className="flex items-center gap-4">
                 <div>
@@ -302,7 +373,7 @@ export default function ProductDetails() {
           </div>
 
           {/* Quantity Selector */}
-          <div className="flex items-center gap-2 mt-4 bg-gray-100 rounded-lg p-1 w-fit">
+          <div className="flex items-center gap-2 mt-4 bg-gray-100 rounded-lg p-1 w-fit lg:hidden">
             <button
               className="w-9 h-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm transition"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -332,7 +403,7 @@ export default function ProductDetails() {
 
           {/* Add to Cart */}
           <button
-            className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded transition-transform transform hover:scale-105"
+            className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded transition-transform transform hover:scale-105 lg:hidden"
             onClick={() =>
               addToCart({
                 productId: product._id,
