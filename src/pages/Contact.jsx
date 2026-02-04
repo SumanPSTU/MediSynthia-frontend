@@ -131,47 +131,34 @@ const ContactUs = () => {
       </section>
 
       {/* ================= QUICK CONTACT CARDS ================= */}
-      <section className="py-24 px-6 md:px-20 bg-gray-50">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            {
-              icon: <FaPhoneAlt />,
-              title: "Call Us",
-              text: "+880 1234 567890",
-            },
-            {
-              icon: <FaEnvelope />,
-              title: "Email Support",
-              text: "support@medisynthia.com",
-            },
-            {
-              icon: <FaMapMarkerAlt />,
-              title: "Head Office",
-              text: "Dhaka, Bangladesh",
-            },
-            {
-              icon: <FaClock />,
-              title: "Service Hours",
-              text: "9 AM – 8 PM (Sat–Thu)",
-            },
-          ].map((item, i) => (
-            <div
-              key={i}
-              data-aos="fade-up"
-              data-aos-delay={i * 100}
-              className="bg-white rounded-3xl shadow-xl p-8 text-center hover:-translate-y-2 transition-all"
-            >
-              <div className="text-4xl text-emerald-600 mb-4">
-                {item.icon}
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
-                {item.title}
-              </h3>
-              <p className="text-gray-600">{item.text}</p>
-            </div>
-          ))}
+        <section className="py-24 px-6 md:px-20 bg-gray-50">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      {[
+        { icon: <FaPhoneAlt />, title: "Call Us", text: "+880 1714-153444" },
+        { icon: <FaEnvelope />, title: "Email Support", text: "support@medisynthia.com" },
+        { icon: <FaMapMarkerAlt />, title: "Head Office", text: "Jatrabari, Dhaka, Bangladesh" },
+        { icon: <FaClock />, title: "Service Hours", text: "Sun - Sat (7/24 Support)" },
+      ].map((item, i) => (
+        <div
+          key={i}
+          data-aos="fade-up"
+          data-aos-delay={i * 100}
+          className="bg-white rounded-3xl shadow-xl p-8 text-center hover:-translate-y-2 transition-all"
+        >
+          {/* Icon container */}
+          <div className="mx-auto mb-4 flex items-center justify-center w-14 h-14 rounded-full bg-emerald-50">
+            <span className="text-4xl text-emerald-600">
+              {item.icon}
+            </span>
+          </div>
+
+          <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+          <p className="text-gray-600">{item.text}</p>
         </div>
-      </section>
+      ))}
+    </div>
+        </section>
+
 
       {/* ================= DEPARTMENTS + FORM ================= */}
       <section className="py-28 px-6 md:px-20">
@@ -366,19 +353,21 @@ const ContactUs = () => {
       </section>
 
       {/* ================= MAP ================= */}
-      <section className="px-6 md:px-20 pb-28">
-        <div
-          className="rounded-3xl overflow-hidden shadow-2xl h-[420px]"
-          data-aos="zoom-in"
-        >
-          <iframe
-            title="MediSynthia Location"
-            src="https://www.google.com/maps?q=Dhaka,Bangladesh&output=embed"
-            className="w-full h-full border-0"
-            loading="lazy"
-          ></iframe>
-        </div>
-      </section>
+            <section className="px-6 md:px-20 pb-28">
+              <div
+                className="rounded-3xl overflow-hidden shadow-2xl h-[420px]"
+                data-aos="zoom-in"
+              >
+                <iframe
+                  title="MediSynthia Location"
+                  src="https://www.google.com/maps?q=Tony%20Tower,%20Dhaka&t=k&z=18&output=embed"
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+            </section>
+
 
       {/* ================= CTA ================= */}
       <section className="bg-gradient-to-r from-emerald-600 to-green-500 text-white py-24 text-center px-6">

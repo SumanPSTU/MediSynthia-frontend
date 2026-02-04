@@ -7,8 +7,8 @@ export default function ChatButton({ isOpen, onClick, unreadCount = 0 }) {
   const [showPulse, setShowPulse] = useState(!isOpen);
 
   // WhatsApp contact number - Bangladesh format
-  const WHATSAPP_NUMBER = "8801714371234";
-  const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Hello`;
+  const WHATSAPP_NUMBER = "8801714153444"; // Replace with actual number without '+' or dashes
+  const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Hello there! I need assistance with my order on MediSynthia.`;
 
   const handleWhatsAppClick = (e) => {
     e.stopPropagation();

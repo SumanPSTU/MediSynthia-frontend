@@ -76,12 +76,23 @@ const AboutUs = () => {
         <h2 className="text-3xl font-bold text-center mb-12" data-aos="fade-up">Why Choose MediSynthia?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, idx) => (
-            <div key={idx} className="bg-white shadow-lg rounded-lg p-6 text-center hover:scale-105 transition-transform duration-300" data-aos="flip-left" data-aos-delay={idx*150}>
-              <div className="text-4xl text-[rgb(7,150,105)] mb-4">{feature.icon}</div>
-              <h3 className="font-semibold text-xl mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.desc}</p>
-            </div>
-          ))}
+  <div
+    key={idx}
+    className="bg-white shadow-lg rounded-lg p-6 text-center hover:scale-105 transition-transform duration-300"
+    data-aos="flip-left"
+    data-aos-delay={idx * 150}
+  >
+    <div className="flex justify-center items-center mb-4">
+      <div className="text-4xl text-[rgb(7,150,105)]">
+        {feature.icon}
+      </div>
+    </div>
+
+    <h3 className="font-semibold text-xl mb-2">{feature.title}</h3>
+    <p className="text-gray-600">{feature.desc}</p>
+  </div>
+))}
+
         </div>
       </section>
 
@@ -129,12 +140,23 @@ const AboutUs = () => {
       <section className="py-20 px-6 md:px-20 bg-gray-50">
         <h2 className="text-3xl font-bold text-center mb-12" data-aos="fade-up">Our Achievements</h2>
         <div className="flex justify-center gap-12">
-          {awards.map((award, idx) => (
-            <div key={idx} className="bg-white shadow-lg rounded-lg p-8 text-center hover:shadow-2xl transition-shadow" data-aos="zoom-in" data-aos-delay={idx*100}>
-              <div className="text-5xl text-[rgb(7,150,105)] mb-4">{award.icon}</div>
-              <h3 className="text-xl font-semibold">{award.title}</h3>
-            </div>
-          ))}
+         {awards.map((award, idx) => (
+  <div
+    key={idx}
+    className="bg-white shadow-lg rounded-lg p-8 text-center hover:shadow-2xl transition-shadow"
+    data-aos="zoom-in"
+    data-aos-delay={idx * 100}
+  >
+    <div className="flex justify-center items-center mb-4">
+      <div className="text-5xl text-[rgb(7,150,105)]">
+        {award.icon}
+      </div>
+    </div>
+
+    <h3 className="text-xl font-semibold">{award.title}</h3>
+  </div>
+))}
+
         </div>
       </section>
 

@@ -42,10 +42,10 @@ export default function Footer() {
           <h2 className="text-lg font-semibold mb-3">Contact Us</h2>
           <ul className="space-y-3 text-gray-100">
             <li className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" /> Dhaka, Bangladesh
+              <MapPin className="w-5 h-5" /> Jatrabari, Dhaka
             </li>
             <li className="flex items-center gap-2">
-              <Phone className="w-5 h-5" /> +880 1234 567 890
+              <Phone className="w-5 h-5" /> +880 1714-153444
             </li>
             <li className="flex items-center gap-2">
               <Mail className="w-5 h-5" /> support@medisynthia.com
