@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useCart } from "../context/CartContext";
 import axiosClient from "../api/axiosClient";
-import { Package, ShoppingBag, ChevronRight, Plus, MapPin, Truck, DollarSign, CheckCircle, AlertCircle, Home, MapPinIcon } from "lucide-react";
+import { Package, ShoppingBag, ChevronRight, Plus, MapPin, Truck, DollarSign, CheckCircle, AlertCircle, Home, MapPinIcon, Edit2 } from "lucide-react";
 
 // Get backend URL from axiosClient configuration
 const BACKEND_URL = axiosClient.defaults.baseURL || "http://localhost:3000";
@@ -34,6 +34,9 @@ export default function CheckoutPage() {
     zipCode: "",
     country: "Bangladesh"
   });
+
+  // Edit address state
+  const [editingAddress, setEditingAddress] = useState(null);
 
   // Fetch user profile with addresses
   useEffect(() => {
@@ -73,19 +76,82 @@ export default function CheckoutPage() {
 
   // Validate new address form
   const validateNewAddress = () => {
-    const { street, city, state, zipCode } = newAddress;
-    if (!street || !city || !state || !zipCode) {
-      toast.error("Please fill all address fields");
+    const { street, city, state } = newAddress;
+    if (!street || !city || !state) {
+      toast.error("Please fill required address fields (Street, City, State)");
       return false;
     }
     return true;
   };
 
   // Handle adding new address
-  const handleAddNewAddress = () => {
+  const handleAddNewAddress = async () => {
     if (!validateNewAddress()) return;
-    setSelectedAddress(newAddress);
-    setShowNewAddressForm(false);
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Save new address to backend
+      await axiosClient.put("/user/profile", {
+        deliveryAddress: newAddress
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Update local state
+      setUserInfo({...userInfo, deliveryAddress: newAddress});
+      setSelectedAddress(newAddress);
+      setEditingAddress(null);
+      setShowNewAddressForm(false);
+      toast.success("Address saved successfully!");
+    } catch (err) {
+      // If backend fails, still allow local use
+      console.error(err);
+      setSelectedAddress(newAddress);
+      setShowNewAddressForm(false);
+      toast.warning("Address saved locally but not synced to profile");
+    }
+  };
+
+  // Handle editing address
+  const handleEditAddress = (addressToEdit) => {
+    setNewAddress(addressToEdit);
+    setEditingAddress(addressToEdit);
+    setShowNewAddressForm(true);
+  };
+
+  // Handle updating edited address
+  const handleUpdateAddress = async () => {
+    if (!validateNewAddress()) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Determine which address to update
+      const isDeliveryAddress = editingAddress === userInfo?.deliveryAddress;
+      
+      // Update the backend
+      await axiosClient.put("/user/profile", {
+        [isDeliveryAddress ? "deliveryAddress" : "address"]: newAddress
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Update local state
+      if (isDeliveryAddress) {
+        setUserInfo({...userInfo, deliveryAddress: newAddress});
+      } else {
+        setUserInfo({...userInfo, address: newAddress});
+      }
+
+      setSelectedAddress(newAddress);
+      setEditingAddress(null);
+      setShowNewAddressForm(false);
+      toast.success("Address updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update address");
+      console.error(err);
+    }
   };
 
   // Handle place order
@@ -308,72 +374,102 @@ export default function CheckoutPage() {
                   <div className="space-y-3">
                     {/* Home Address Option */}
                     {userInfo?.address?.street && (
-                      <div 
-                        onClick={() => {
-                          setSelectedAddress(userInfo.address);
-                          setShowNewAddressForm(false);
-                        }}
-                        className={`p-4 md:p-5 border-2 rounded-2xl cursor-pointer transition-all hover:shadow-md ${
-                          selectedAddress === userInfo.address ? 'border-emerald-500 bg-emerald-50 shadow-md' : 'border-gray-200 hover:border-emerald-300'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="pt-1">
-                            <input 
-                              type="radio" 
-                              checked={selectedAddress === userInfo.address}
-                              onChange={() => setSelectedAddress(userInfo.address)}
-                              className="w-5 h-5 text-emerald-600 cursor-pointer"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Home className="w-5 h-5 text-emerald-600" />
-                              <p className="font-semibold text-gray-800">Home Address</p>
+                      <div className="space-y-2">
+                        <div 
+                          onClick={() => {
+                            setSelectedAddress(userInfo.address);
+                            setShowNewAddressForm(false);
+                            setEditingAddress(null);
+                          }}
+                          className={`p-4 md:p-5 border-2 rounded-2xl cursor-pointer transition-all hover:shadow-md ${
+                            selectedAddress === userInfo.address ? 'border-emerald-500 bg-emerald-50 shadow-md' : 'border-gray-200 hover:border-emerald-300'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="pt-1">
+                              <input 
+                                type="radio" 
+                                checked={selectedAddress === userInfo.address}
+                                onChange={() => setSelectedAddress(userInfo.address)}
+                                className="w-5 h-5 text-emerald-600 cursor-pointer"
+                              />
                             </div>
-                            <p className="text-sm text-gray-600 ml-7">{userInfo.address.street}</p>
-                            <p className="text-sm text-gray-600 ml-7">{userInfo.address.city}, {userInfo.address.state} {userInfo.address.zipCode}</p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Home className="w-5 h-5 text-emerald-600" />
+                                <p className="font-semibold text-gray-800">Home Address</p>
+                              </div>
+                              <p className="text-sm text-gray-600 ml-7">{userInfo.address.street}</p>
+                              <p className="text-sm text-gray-600 ml-7">{userInfo.address.city}, {userInfo.address.state} {userInfo.address.zipCode}</p>
+                            </div>
                           </div>
                         </div>
+                        <button
+                          onClick={() => handleEditAddress(userInfo.address)}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-emerald-300 text-emerald-600 rounded-lg hover:bg-emerald-50 transition text-sm font-medium"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Edit Address
+                        </button>
                       </div>
                     )}
 
                     {/* Delivery Address Option */}
                     {userInfo?.deliveryAddress?.street && userInfo.deliveryAddress !== userInfo.address && (
-                      <div 
-                        onClick={() => {
-                          setSelectedAddress(userInfo.deliveryAddress);
-                          setShowNewAddressForm(false);
-                        }}
-                        className={`p-4 md:p-5 border-2 rounded-2xl cursor-pointer transition-all hover:shadow-md ${
-                          selectedAddress === userInfo.deliveryAddress ? 'border-emerald-500 bg-emerald-50 shadow-md' : 'border-gray-200 hover:border-emerald-300'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="pt-1">
-                            <input 
-                              type="radio" 
-                              checked={selectedAddress === userInfo.deliveryAddress}
-                              onChange={() => setSelectedAddress(userInfo.deliveryAddress)}
-                              className="w-5 h-5 text-emerald-600 cursor-pointer"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Truck className="w-5 h-5 text-blue-600" />
-                              <p className="font-semibold text-gray-800">Delivery Address</p>
+                      <div className="space-y-2">
+                        <div 
+                          onClick={() => {
+                            setSelectedAddress(userInfo.deliveryAddress);
+                            setShowNewAddressForm(false);
+                            setEditingAddress(null);
+                          }}
+                          className={`p-4 md:p-5 border-2 rounded-2xl cursor-pointer transition-all hover:shadow-md ${
+                            selectedAddress === userInfo.deliveryAddress ? 'border-emerald-500 bg-emerald-50 shadow-md' : 'border-gray-200 hover:border-emerald-300'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="pt-1">
+                              <input 
+                                type="radio" 
+                                checked={selectedAddress === userInfo.deliveryAddress}
+                                onChange={() => setSelectedAddress(userInfo.deliveryAddress)}
+                                className="w-5 h-5 text-emerald-600 cursor-pointer"
+                              />
                             </div>
-                            <p className="text-sm text-gray-600 ml-7">{userInfo.deliveryAddress.street}</p>
-                            <p className="text-sm text-gray-600 ml-7">{userInfo.deliveryAddress.city}, {userInfo.deliveryAddress.state} {userInfo.deliveryAddress.zipCode}</p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Truck className="w-5 h-5 text-blue-600" />
+                                <p className="font-semibold text-gray-800">Delivery Address</p>
+                              </div>
+                              <p className="text-sm text-gray-600 ml-7">{userInfo.deliveryAddress.street}</p>
+                              <p className="text-sm text-gray-600 ml-7">{userInfo.deliveryAddress.city}, {userInfo.deliveryAddress.state} {userInfo.deliveryAddress.zipCode}</p>
+                            </div>
                           </div>
                         </div>
+                        <button
+                          onClick={() => handleEditAddress(userInfo.deliveryAddress)}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-emerald-300 text-emerald-600 rounded-lg hover:bg-emerald-50 transition text-sm font-medium"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Edit Address
+                        </button>
                       </div>
                     )}
 
                     {/* New Address Form Toggle */}
-                    {!showNewAddressForm && (!selectedAddress || (newAddress.street && selectedAddress === newAddress)) && (
+                    {!showNewAddressForm && (
                       <button
-                        onClick={() => setShowNewAddressForm(true)}
+                        onClick={() => {
+                          setNewAddress({
+                            street: "",
+                            city: "",
+                            state: "",
+                            zipCode: "",
+                            country: "Bangladesh"
+                          });
+                          setEditingAddress(null);
+                          setShowNewAddressForm(true);
+                        }}
                         className="w-full p-4 md:p-5 border-2 border-dashed border-emerald-300 rounded-xl text-emerald-600 hover:bg-emerald-50 transition font-medium flex items-center justify-center gap-2"
                       >
                         <Plus className="w-5 h-5" />
@@ -409,7 +505,7 @@ export default function CheckoutPage() {
                         />
                         <input 
                           type="text" 
-                          placeholder="Postal Code *" 
+                          placeholder="Postal Code" 
                           value={newAddress.zipCode} 
                           onChange={(e) => setNewAddress({...newAddress, zipCode: e.target.value})}
                           className="p-3 md:p-4 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-emerald-500 outline-none text-sm md:text-base"
@@ -424,13 +520,23 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex gap-3">
                         <button
-                          onClick={handleAddNewAddress}
+                          onClick={editingAddress ? handleUpdateAddress : handleAddNewAddress}
                           className="flex-1 px-4 py-2 md:py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition font-medium text-sm md:text-base"
                         >
-                          Use This Address
+                          {editingAddress ? "Update Address" : "Use This Address"}
                         </button>
                         <button
-                          onClick={() => setShowNewAddressForm(false)}
+                          onClick={() => {
+                            setShowNewAddressForm(false);
+                            setEditingAddress(null);
+                            setNewAddress({
+                              street: "",
+                              city: "",
+                              state: "",
+                              zipCode: "",
+                              country: "Bangladesh"
+                            });
+                          }}
                           className="flex-1 px-4 py-2 md:py-3 border border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium text-sm md:text-base"
                         >
                           Cancel

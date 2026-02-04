@@ -121,7 +121,7 @@ const ContactUs = () => {
       <section className="relative bg-gradient-to-br from-emerald-400 via-emerald-600 to-emerald-800 text-white py-32 px-6 text-center">
         <div className="max-w-4xl mx-auto" data-aos="fade-down">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-6">
-            Contact MediCare
+            Contact MediSynthia
           </h1>
           <p className="text-lg md:text-xl opacity-95">
             Reliable healthcare support, professional guidance, and instant
@@ -142,7 +142,7 @@ const ContactUs = () => {
             {
               icon: <FaEnvelope />,
               title: "Email Support",
-              text: "support@medicare.com",
+              text: "support@medisynthia.com",
             },
             {
               icon: <FaMapMarkerAlt />,
@@ -372,7 +372,7 @@ const ContactUs = () => {
           data-aos="zoom-in"
         >
           <iframe
-            title="MediCare Location"
+            title="MediSynthia Location"
             src="https://www.google.com/maps?q=Dhaka,Bangladesh&output=embed"
             className="w-full h-full border-0"
             loading="lazy"

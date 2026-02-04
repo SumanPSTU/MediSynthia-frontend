@@ -12,7 +12,7 @@ const firebaseConfig = {
   projectId: "medisynthia-web-app-main",
   storageBucket: "medisynthia-web-app-main.firebasestorage.app",
   messagingSenderId: "923983074941",
-  appId: "1:923983074941:web:1e93be92e9d777e96b8314",
+  appId: "1:323983074941:web:1e93be92e9d777e96b8314",
   measurementId: "G-9DNGQCSYC0"
 };
 

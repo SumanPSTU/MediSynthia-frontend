@@ -316,7 +316,7 @@ export default function Navbar() {
           </button>
 
           <Link to="/" className="text-lg font-bold text-emerald-600">
-            MediCare
+            MediSynthia
           </Link>
 
           <div className="flex items-center gap-3">

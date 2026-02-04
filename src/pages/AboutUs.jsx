@@ -34,7 +34,7 @@ const AboutUs = () => {
   ];
 
   const testimonials = [
-    { name: "Farhana Akter", feedback: "MediCare is super reliable! Fast delivery and genuine medicines." },
+    { name: "Farhana Akter", feedback: "MediSynthia is super reliable! Fast delivery and genuine medicines." },
     { name: "Rashed Khan", feedback: "Great customer service and excellent guidance from pharmacists." },
     { name: "Sabbir Ahmed", feedback: "User-friendly platform, and I trust the quality 100%." },
   ];
@@ -48,7 +48,7 @@ const AboutUs = () => {
     <div className="w-full text-gray-800">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-green-400 to-[rgb(7,150,105)] text-white py-32 px-6 text-center">
-        <h1 className="text-5xl md:text-6xl font-bold mb-6" data-aos="fade-down">Welcome to MediCare</h1>
+        <h1 className="text-5xl md:text-6xl font-bold mb-6" data-aos="fade-down">Welcome to MediSynthia</h1>
         <p className="max-w-3xl mx-auto text-lg md:text-xl mb-8" data-aos="fade-up">
           Your trusted online pharmacy in Bangladesh. Authentic medicines, expert guidance, and fast delivery at your fingertips.
         </p>
@@ -73,7 +73,7 @@ const AboutUs = () => {
 
       {/* Features Section */}
       <section className="py-20 px-6 md:px-20">
-        <h2 className="text-3xl font-bold text-center mb-12" data-aos="fade-up">Why Choose MediCare?</h2>
+        <h2 className="text-3xl font-bold text-center mb-12" data-aos="fade-up">Why Choose MediSynthia?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, idx) => (
             <div key={idx} className="bg-white shadow-lg rounded-lg p-6 text-center hover:scale-105 transition-transform duration-300" data-aos="flip-left" data-aos-delay={idx*150}>
@@ -159,7 +159,7 @@ const AboutUs = () => {
 
       {/* CTA Footer */}
       <section className="bg-gradient-to-r from-green-400 to-[rgb(7,150,105)] text-white py-24 px-6 text-center" data-aos="fade-up">
-        <h2 className="text-4xl font-bold mb-6">Ready to Experience MediCare?</h2>
+        <h2 className="text-4xl font-bold mb-6">Ready to Experience MediSynthia?</h2>
         <p className="max-w-2xl mx-auto mb-8 text-lg">
           Join thousands of happy customers and get your medicines delivered safely to your doorstep.
         </p>

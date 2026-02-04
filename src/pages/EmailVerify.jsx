@@ -12,7 +12,8 @@ function EmailVerify() {
 
   // Extract token from URL if useParams fails
   const tokenFromUrl = location.pathname.split("/verify/")[1];
-  const token = tokenFromParams || tokenFromUrl;
+  // Decode the URL-encoded token
+  const token = tokenFromParams ? decodeURIComponent(tokenFromParams) : (tokenFromUrl ? decodeURIComponent(tokenFromUrl) : "");
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(null);
@@ -21,6 +22,10 @@ function EmailVerify() {
 
   const verifyEmail = async () => {
     try {
+      if (!token || token.trim() === "") {
+        throw new Error("Verification token is missing or invalid");
+      }
+
       const res = await axiosClient.post(
         "user/verify",
         {},

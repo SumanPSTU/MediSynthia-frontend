@@ -100,7 +100,7 @@ const Faqs = () => {
                 </h1>
                 <p className="max-w-3xl mx-auto text-lg md:text-xl opacity-95">
                     Find quick answers about orders, medicines, delivery, prescriptions,
-                    privacy, and medical support at MediCare.
+                    privacy, and medical support at MediSynthia.
                 </p>
             </section>
 

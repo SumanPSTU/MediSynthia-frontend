@@ -48,7 +48,7 @@ export default function Footer() {
               <Phone className="w-5 h-5" /> +880 1234 567 890
             </li>
             <li className="flex items-center gap-2">
-              <Mail className="w-5 h-5" /> support@medicare.com
+              <Mail className="w-5 h-5" /> support@medisynthia.com
             </li>
           </ul>
         </div>
@@ -57,7 +57,7 @@ export default function Footer() {
         <div>
           <h2 className="text-lg font-semibold mb-3">About Our Shop</h2>
           <p className="text-sm text-gray-100 leading-relaxed">
-            MediCare is more than a pharmacy – it’s your health partner.
+            MediSynthia is more than a pharmacy – it's your health partner.
             We provide genuine medicines, wellness essentials, and baby care products
             with fast delivery and affordable pricing.
             Your well-being is our priority.

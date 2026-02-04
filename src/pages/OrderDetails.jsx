@@ -595,18 +595,18 @@ export default function OrderDetails() {
               <div className="space-y-2 sm:space-y-3 text-sm pb-4 border-b">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium text-gray-800">৳{order.totalAmount?.toFixed(2)}</span>
+                  <span className="font-medium text-gray-800">৳{(order.subtotal || (order.totalAmount - (order.deliveryCharge || 120)))?.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Delivery charge</span>
-                  <span className="font-medium text-gray-800">৳120.00</span>
+                  <span className="font-medium text-gray-800">৳{(order.deliveryCharge || 120).toFixed(2)}</span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-3 mb-3">
                 <span className="font-semibold text-gray-800">Total</span>
                 <span className="text-lg sm:text-2xl font-bold text-emerald-600">
-                  ৳{(order.totalAmount + 120).toFixed(2)}
+                  ৳{order.totalAmount?.toFixed(2)}
                 </span>
               </div>
 

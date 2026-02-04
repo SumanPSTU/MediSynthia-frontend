@@ -1,8 +1,11 @@
 
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
+import { auth, provider } from "../firebase";
+import { signInWithPopup } from "firebase/auth";
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -23,7 +26,7 @@ const validationSchema = Yup.object().shape({
     .matches(/^01\d{9}$/, "Phone number must be exactly 11 digits and start with '01'"),
   password: Yup.string()
     .required("Password is required")
-    .min(6, "Password must be at least 6 characters"),
+    .min(8, "Password must be at least 8 characters"),
   confirmPassword: Yup.string()
     .required("Confirm Password is required")
     .oneOf([Yup.ref("password"), null], "Passwords must match"),
@@ -36,8 +39,38 @@ export default function RegisterPage() {
   const [emailSent, setEmailSent] = useState(false);
   const [userEmail, setUserEmail] = useState(""); // to track for resending
 
-
   const navigate = useNavigate();
+
+  const handleGoogleRegister = async () => {
+    try {
+      setLoading(true);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const idToken = await user.getIdToken();
+
+      // Send Google token to backend for verification and user creation
+      const res = await axiosClient.post("/user/google-auth", {
+        idToken,
+        name: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL
+      });
+
+      if (res.data?.success && res.data?.accessToken) {
+        localStorage.setItem("accessToken", res.data.accessToken);
+        if (res.data.refreshToken) {
+          localStorage.setItem("refreshToken", res.data.refreshToken);
+        }
+        toast.success("Registration successful!", { autoClose: 2000 });
+        setTimeout(() => navigate("/"), 1500);
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || "Google registration failed";
+      toast.error(message, { autoClose: 3000 });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const {
     register,
@@ -98,7 +131,7 @@ export default function RegisterPage() {
       <div className="bg-white bg-opacity-20 backdrop-blur-lg rounded-3xl shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden">
         {/* Left Illustration */}
         <div className="md:flex-1 hidden md:flex flex-col items-center justify-center p-10 bg-emerald-700">
-          <h1 className="text-4xl font-bold text-white mb-4 text-center">Join MediCare</h1>
+          <h1 className="text-4xl font-bold text-white mb-4 text-center">Join MediSynthia</h1>
           <p className="text-white mb-6 text-center">
             Sign up to enjoy seamless access to genuine medicines, wellness products, and exclusive offers.
           </p>
@@ -240,6 +273,25 @@ export default function RegisterPage() {
                 {loading ? "Registering..." : "Register"}
               </button>
             </form>
+
+            {/* Divider */}
+            <div className="my-6 flex items-center">
+              <hr className="flex-1 border-gray-300" />
+              <span className="mx-2 text-gray-400">or</span>
+              <hr className="flex-1 border-gray-300" />
+            </div>
+
+            {/* Google Registration */}
+            <div className="flex gap-4 justify-center">
+              <button
+                type="button"
+                onClick={handleGoogleRegister}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-xl hover:shadow-lg transition disabled:opacity-50"
+              >
+                <FcGoogle className="w-5 h-5" /> Google
+              </button>
+            </div>
 
             {emailSent && (
               <div className="mt-6 bg-emerald-100 p-4 rounded-xl text-center text-emerald-800 border border-emerald-300">

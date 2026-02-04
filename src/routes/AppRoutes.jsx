@@ -11,6 +11,7 @@ import Profile from "../pages/Profile.jsx";
 import OrderDetails from "../pages/OrderDetails.jsx";
 import ForgotPassword from "../pages/ForgotPassword.jsx";
 import EmailVerify from "../pages/EmailVerify.jsx";
+import ResendVerification from "../pages/ResendVerification.jsx";
 import ErrorBoundary from '../pages/ErrorBoundary.jsx';
 import AboutUs from '../pages/AboutUs.jsx';
 import Contact from "../pages/Contact.jsx";
@@ -22,6 +23,7 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/verify/:token" element={<EmailVerify />} />
+        <Route path="/resend-verification" element={<ResendVerification />} />
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetails />} />        
         <Route path="/checkout" element={<Checkout />} />

@@ -119,8 +119,8 @@ export default function ForgotPassword() {
       return;
     }
     
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
     
@@ -340,7 +340,7 @@ export default function ForgotPassword() {
                     type={showPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="New Password (min. 6 characters)"
+                    placeholder="New Password (min. 8 characters)"
                     className="w-full px-4 py-3 pl-12 pr-12 rounded-xl border border-gray-300 bg-white bg-opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                     autoComplete="new-password"
                   />
