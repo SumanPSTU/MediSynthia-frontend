@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
-import { Send, X, User, RefreshCw, MessageCircle, WifiOff } from "lucide-react";
+import { Send, X, User, RefreshCw, MessageCircle, Wifi } from "lucide-react";
 import { chatApi } from "../api/axiosClient";
 import { toast } from "react-hot-toast";
 
@@ -536,7 +536,7 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
               <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
               </div>
-              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-3 border-emerald-500 ${isAdminOnline ? "bg-green-400 animate-pulse" : "bg-gray-400"
+              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-3 border-emerald-500 ${isAdminOnline ? "bg-green-400 animate-pulse" : "bg-green-400"
                 }`}></div>
             </div>
             <div>
@@ -546,7 +546,7 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
                   <>Online</>
                 ) : (
                   <span className="flex items-center gap-1">
-                    <WifiOff className="w-3 h-3" /> Offline
+                    <Wifi className="w-3 h-3" /> Online
                   </span>
                 )}
               </p>

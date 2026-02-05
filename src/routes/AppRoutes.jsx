@@ -16,27 +16,32 @@ import ErrorBoundary from '../pages/ErrorBoundary.jsx';
 import AboutUs from '../pages/AboutUs.jsx';
 import Contact from "../pages/Contact.jsx";
 import Faqs from "../pages/Faqs.jsx";
+import OTPRouteGuard from "../components/OTPRouteGuard.jsx";
+import PrivateRoute from "../components/PrivateRoute.jsx";
 
 export default function AppRoutes() {
   return (
     <ErrorBoundary>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/verify/:token" element={<EmailVerify />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetails />} />        
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/cart" element={<Cart />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/order/:orderId" element={<OrderDetails />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/aboutUs" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/faqs" element={<Faqs />} />
+        <Route path="/forgot-password" element={<OTPRouteGuard><ForgotPassword /></OTPRouteGuard>} />
+        
+        {/* Protected Routes */}
+        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+        <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
+        <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
+        <Route path="/confirmation" element={<PrivateRoute><Confirmation /></PrivateRoute>} />
+        <Route path="/order/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
       </Routes>
     </ErrorBoundary>
   );

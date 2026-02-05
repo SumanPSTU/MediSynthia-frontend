@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../context/AuthContext.jsx";
 import {
   User,
   Phone,
@@ -20,6 +21,7 @@ import {
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -30,21 +32,19 @@ export default function Profile() {
   // Handle logout
   const handleLogout = async () => {
     try {
-      // Clear localStorage first to ensure immediate logout
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-
-      // Call logout API (optional - user is already logged out locally)
+      // Call logout API
       await axiosClient.post("/user/logout").catch(() => {
-        // Ignore API errors since we're clearing localStorage anyway
+        // Ignore API errors
       });
+
+      // Use auth context logout
+      logout();
 
       toast.success("Logged out successfully");
       navigate("/login", { replace: true });
     } catch (err) {
-      // Even if there's an error, user should be logged out locally
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
+      // Even if there's an error, user should be logged out
+      logout();
       navigate("/login", { replace: true });
       toast.error("Logged out");
     }

@@ -72,7 +72,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm">
         {/* Social Icons */}
         <div className="flex space-x-5 mb-4 md:mb-0">
-          <a href="#" className="hover:text-gray-300"><Facebook className="w-5 h-5" /></a>
+          <a href="https://www.facebook.com/profile.php?id=61550690832478&rdid=TtuGTKKflhChcNso&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1HiFzBg6DX%2F#" target="_blank" className="hover:text-gray-300"><Facebook className="w-5 h-5" /></a>
           <a href="#" className="hover:text-gray-300"><Twitter className="w-5 h-5" /></a>
           <a href="#" className="hover:text-gray-300"><Instagram className="w-5 h-5" /></a>
           <a href="#" className="hover:text-gray-300"><Linkedin className="w-5 h-5" /></a>

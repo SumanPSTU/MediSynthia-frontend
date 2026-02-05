@@ -8,7 +8,7 @@ const axiosClient = axios.create({
 });
  
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+  const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -30,7 +30,6 @@ axiosClient.interceptors.response.use(
 
         if (!refreshToken) {
           // No refresh token, redirect to login
-          localStorage.removeItem("token");
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           window.location.href = "/login";
@@ -43,7 +42,6 @@ axiosClient.interceptors.response.use(
         if (response.data?.success && response.data?.accessToken) {
           const newAccessToken = response.data.accessToken;
           localStorage.setItem("accessToken", newAccessToken);
-          localStorage.setItem("token", newAccessToken);
 
           // Update the original request with new token
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -52,7 +50,6 @@ axiosClient.interceptors.response.use(
           return axiosClient(originalRequest);
         } else {
           // Refresh failed, redirect to login
-          localStorage.removeItem("token");
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           window.location.href = "/login";
@@ -60,7 +57,6 @@ axiosClient.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed, redirect to login
-        localStorage.removeItem("token");
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         window.location.href = "/login";
@@ -80,6 +76,11 @@ export const chatApi = {
   getMessages: (markAsRead = false) => axiosClient.get(`/api/chat/messages/admin?markAsRead=${markAsRead}`),
   // Get unread message count
   getUnreadCount: () => axiosClient.get('/api/chat/unread-count'),
+};
+
+// Auth methods
+export const authApi = {
+  refreshUserToken: (refreshToken) => axiosClient.post('/user/refresh-token', { refreshToken }),
 };
 
 export default axiosClient;

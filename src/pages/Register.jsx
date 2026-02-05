@@ -1,11 +1,9 @@
 
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
-import { auth, provider } from "../firebase";
-import { signInWithPopup } from "firebase/auth";
+import { setupTokenRefresh, clearTokenRefresh } from "../utils/tokenManager";
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -40,37 +38,6 @@ export default function RegisterPage() {
   const [userEmail, setUserEmail] = useState(""); // to track for resending
 
   const navigate = useNavigate();
-
-  const handleGoogleRegister = async () => {
-    try {
-      setLoading(true);
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const idToken = await user.getIdToken();
-
-      // Send Google token to backend for verification and user creation
-      const res = await axiosClient.post("/user/google-auth", {
-        idToken,
-        name: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL
-      });
-
-      if (res.data?.success && res.data?.accessToken) {
-        localStorage.setItem("accessToken", res.data.accessToken);
-        if (res.data.refreshToken) {
-          localStorage.setItem("refreshToken", res.data.refreshToken);
-        }
-        toast.success("Registration successful!", { autoClose: 2000 });
-        setTimeout(() => navigate("/"), 1500);
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || "Google registration failed";
-      toast.error(message, { autoClose: 3000 });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const {
     register,
@@ -279,18 +246,6 @@ export default function RegisterPage() {
               <hr className="flex-1 border-gray-300" />
               <span className="mx-2 text-gray-400">or</span>
               <hr className="flex-1 border-gray-300" />
-            </div>
-
-            {/* Google Registration */}
-            <div className="flex gap-4 justify-center">
-              <button
-                type="button"
-                onClick={handleGoogleRegister}
-                disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-xl hover:shadow-lg transition disabled:opacity-50"
-              >
-                <FcGoogle className="w-5 h-5" /> Google
-              </button>
             </div>
 
             {emailSent && (

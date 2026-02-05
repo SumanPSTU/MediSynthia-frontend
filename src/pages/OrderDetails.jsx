@@ -620,13 +620,13 @@ export default function OrderDetails() {
                   {order.paymentMethod?.replace(/_/g, ' ')}
                 </p>
                 <p className={`text-xs sm:text-sm mt-1 px-2 py-1 rounded inline-block font-medium ${
-                  order.paymentStatus === 'completed'
+                  order.orderStatus === 'Delivered' || order.paymentStatus === 'completed'
                     ? 'bg-green-100 text-green-700'
                     : order.paymentStatus === 'pending'
                     ? 'bg-yellow-100 text-yellow-700'
                     : 'bg-red-100 text-red-700'
                 }`}>
-                  {order.paymentStatus?.charAt(0).toUpperCase() + order.paymentStatus?.slice(1)}
+                  {order.orderStatus === 'Delivered' ? 'Paid' : (order.paymentStatus?.charAt(0).toUpperCase() + order.paymentStatus?.slice(1))}
                 </p>
               </div>
 

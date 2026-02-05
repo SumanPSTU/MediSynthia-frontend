@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 
+import { AuthProvider } from "./context/AuthContext.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import AppRoutes from "./routes/AppRoutes.jsx";
@@ -41,33 +42,35 @@ function App() {
         v7_startTransition: true,
         v7_relativeSplatPath: true
       }}>
-      <div className="flex flex-col min-h-screen">
-        <Toaster position="top-right" reverseOrder={false} />
-        <ScrollToTop />
-        <Navbar />
-        <main className="flex-grow pt-[var(--navbar-height)]">
-          <AppRoutes />
-        </main>
-        <Footer />
-        
-        {/* Global Chat Components */}
-        <ChatButton 
-          isOpen={isChatOpen} 
-          onClick={() => {
-            setIsChatOpen(!isChatOpen);
-            if (!isChatOpen) {
-              setUnreadCount(0); // Clear unread when opening chat
-            }
-          }} 
-          unreadCount={unreadCount}
-        />
-        <Messenger 
-          isOpen={isChatOpen} 
-          onClose={() => setIsChatOpen(false)}
-          onNewMessage={(count) => setUnreadCount(count)}
-          onChatOpen={() => setUnreadCount(0)}
-        />
-      </div>
+      <AuthProvider>
+        <div className="flex flex-col min-h-screen">
+          <Toaster position="top-right" reverseOrder={false} />
+          <ScrollToTop />
+          <Navbar />
+          <main className="flex-grow pt-[var(--navbar-height)]">
+            <AppRoutes />
+          </main>
+          <Footer />
+          
+          {/* Global Chat Components */}
+          <ChatButton 
+            isOpen={isChatOpen} 
+            onClick={() => {
+              setIsChatOpen(!isChatOpen);
+              if (!isChatOpen) {
+                setUnreadCount(0); // Clear unread when opening chat
+              }
+            }} 
+            unreadCount={unreadCount}
+          />
+          <Messenger 
+            isOpen={isChatOpen} 
+            onClose={() => setIsChatOpen(false)}
+            onNewMessage={(count) => setUnreadCount(count)}
+            onChatOpen={() => setUnreadCount(0)}
+          />
+        </div>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axiosClient from "../api/axiosClient";
-import { auth, provider } from "../firebase";
-import { signInWithPopup } from "firebase/auth";
+import { setupTokenRefresh, clearTokenRefresh } from "../utils/tokenManager";
+import { useAuth } from "../context/AuthContext.jsx";
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -26,37 +25,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-
-  const handleGoogleLogin = async () => {
-    try {
-      setLoading(true);
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const idToken = await user.getIdToken();
-
-      // Send Google token to backend for verification and user creation
-      const res = await axiosClient.post("/user/google-auth", {
-        idToken,
-        name: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL
-      });
-
-      if (res.data?.success && res.data?.accessToken) {
-        localStorage.setItem("accessToken", res.data.accessToken);
-        if (res.data.refreshToken) {
-          localStorage.setItem("refreshToken", res.data.refreshToken);
-        }
-        toast.success("Login successful!", { autoClose: 2000 });
-        setTimeout(() => navigate("/"), 1500);
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || "Google login failed";
-      toast.error(message, { autoClose: 3000 });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { login } = useAuth();
 
   const {
     register,
@@ -74,18 +43,44 @@ const onSubmit = async (data) => {
       password: data.password,
     });
 
+    // Check if login was successful
+    if (!res.data.success) {
+      toast.error(res.data.message || "Login failed!");
+      setLoading(false);
+      return;
+    }
+
     const { accessToken, refreshToken, message } = res.data;
 
-    localStorage.setItem("token", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
+    // Validate tokens exist
+    if (!accessToken || !refreshToken) {
+      toast.error("Invalid response from server");
+      setLoading(false);
+      return;
+    }
 
-    toast.success(message);
+    // Use auth context to login
+    login({ accessToken, refreshToken, email: data.email.trim() });
 
-    setTimeout(() => navigate("/"), 1500);
+    // Setup automatic token refresh
+    setupTokenRefresh(() => {
+      axiosClient.post("/user/refresh-token", {
+        refreshToken: localStorage.getItem("refreshToken")
+      }).catch(() => {
+        clearTokenRefresh();
+        navigate("/login");
+      });
+    });
+
+    toast.success(message || "Login successful!");
+
+    // Redirect to home with replace to prevent back button issues
+    setTimeout(() => navigate("/", { replace: true }), 1500);
 
   } catch (err) {
-    const message = err.response?.data?.message || "Login failed!";
-    toast.error(message);
+    const errorMsg = err.response?.data?.message || err.message || "Login failed!";
+    toast.error(errorMsg);
+    console.error("Login error:", err);
   } finally {
     setLoading(false);
   }
@@ -171,18 +166,6 @@ const onSubmit = async (data) => {
               <hr className="flex-1 border-gray-300" />
               <span className="mx-2 text-gray-400">or</span>
               <hr className="flex-1 border-gray-300" />
-            </div>
-
-            {/* Google login */}
-            <div className="flex gap-4 justify-center">
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-xl hover:shadow-lg transition disabled:opacity-50"
-              >
-                <FcGoogle className="w-5 h-5" /> Google
-              </button>
             </div>
 
             {/* Register Link */}

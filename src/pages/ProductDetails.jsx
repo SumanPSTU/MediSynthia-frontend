@@ -79,19 +79,25 @@ export default function ProductDetails() {
   };
 
   const fetchRelatedProducts = async () => {
-    if (!currentCategory || !currentSubCategory || !product) return;
+    if (!product) return;
     try {
-      const productNameParts = product.productName.trim().split(/\s+/);
-      const searchTerm = productNameParts[0].toLowerCase(); 
-      
-
-      
-      const relatedRes = await axiosClient.get(
-        `/product/getproduct?category=${currentCategory}&subCategory=${currentSubCategory}&search=${encodeURIComponent(searchTerm)}&exclude=${id}`
-      );
-      
-      if (relatedRes.data.success) {
-        setRelatedProducts(relatedRes.data.products);
+      // Search only by generic
+      if (product.productGeniric) {
+        const genericId = typeof product.productGeniric === 'object' 
+          ? product.productGeniric._id 
+          : product.productGeniric;
+        
+        const relatedRes = await axiosClient.get(
+          `/product/getproduct?productGeniric=${genericId}&exclude=${id}&limit=10`
+        );
+        
+        if (relatedRes.data.success && relatedRes.data.products.length > 0) {
+          setRelatedProducts(relatedRes.data.products);
+        } else {
+          setRelatedProducts([]);
+        }
+      } else {
+        setRelatedProducts([]);
       }
     } catch (err) {
       setRelatedProducts([]);
@@ -314,7 +320,7 @@ export default function ProductDetails() {
             </div>
 
             <button
-              className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded transition-transform transform hover:scale-105"
+              className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded transition-transform transform hover:scale-105"
               onClick={() =>
                 addToCart({
                   productId: product._id,
@@ -403,7 +409,7 @@ export default function ProductDetails() {
 
           {/* Add to Cart */}
           <button
-            className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded transition-transform transform hover:scale-105 lg:hidden"
+            className="mt-4   bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded transition-transform transform hover:scale-105 lg:hidden"
             onClick={() =>
               addToCart({
                 productId: product._id,
