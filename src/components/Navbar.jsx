@@ -14,9 +14,11 @@ import axiosClient from "../api/axiosClient";
 import { toast } from "react-hot-toast";
 import UploadPrescriptionModal from "./UploadPrescriptionModal";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { cart } = useCart();
+  const { isAuthenticated, logout } = useAuth();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -29,10 +31,6 @@ export default function Navbar() {
   const categoriesRef = useRef(null);
 
   const navigate = useNavigate();
-
-  // Directly check token from localStorage on every render
-  const token = localStorage.getItem("token");
-  const isLoggedIn = (token && token !== "null" && token !== "undefined");
 
   // Default avatar
   const defaultAvatar = "https://i.pravatar.cc/40?img=68";
@@ -199,7 +197,7 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop */}
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <Link to="/profile">
               <img
                 src={defaultAvatar}
@@ -330,7 +328,7 @@ export default function Navbar() {
             </Link>
 
             {/* Mobile */}
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <Link to="/profile">
                 <img
                   src={defaultAvatar}
