@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("accessToken");
         if (!token) {
           setLoadingUser(false);
           return;
@@ -89,7 +89,7 @@ export default function CheckoutPage() {
     if (!validateNewAddress()) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       
       // Save new address to backend
       await axiosClient.put("/user/profile", {
@@ -125,7 +125,7 @@ export default function CheckoutPage() {
     if (!validateNewAddress()) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       
       // Determine which address to update
       const isDeliveryAddress = editingAddress === userInfo?.deliveryAddress;
@@ -164,7 +164,7 @@ export default function CheckoutPage() {
     setPlacingOrder(true);
     
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       if (!token) {
         toast.error("Please login to place an order");
         navigate("/login");

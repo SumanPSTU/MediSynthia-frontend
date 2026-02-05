@@ -26,7 +26,7 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
   const initialUnreadCountRef = useRef(null);
   const onChatOpenRef = useRef(onChatOpen);
   const onNewMessageRef = useRef(onNewMessage);
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("accessToken");
 
   // Clear messages when user logs out
   useEffect(() => {

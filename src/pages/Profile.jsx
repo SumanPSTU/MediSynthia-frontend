@@ -801,7 +801,7 @@ function OrdersTab({ user }) {
     const fetchOrders = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("accessToken");
         if (!token) {
           setError("Please login to view your orders");
           setLoading(false);

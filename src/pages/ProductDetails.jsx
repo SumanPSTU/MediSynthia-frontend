@@ -33,7 +33,7 @@ export default function ProductDetails() {
 
   // Check if user is logged in
   const checkAuth = async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (token) {
       try {
         const res = await axiosClient.get("/user/profile");

@@ -43,7 +43,7 @@ const ContactUs = () => {
 
   // Check login status and get user data on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (token && token !== "null" && token !== "undefined") {
       setIsLoggedIn(true);
       // Decode JWT to get user data
@@ -68,7 +68,7 @@ const ContactUs = () => {
     setError("");
 
     // Check if user is logged in
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (!token) {
       setError("Please login to send a message");
       setLoading(false);

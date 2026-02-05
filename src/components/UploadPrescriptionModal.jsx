@@ -95,7 +95,7 @@ export default function UploadPrescriptionModal({ open, onClose, onSuccess }) {
       formData.append("file", file);
       formData.append("notes", notes.trim());
 
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       const res = await axiosClient.post("/prescription/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",

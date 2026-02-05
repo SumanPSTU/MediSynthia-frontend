@@ -10,7 +10,7 @@ export const CartProvider = ({ children }) => {
 
   const fetchCart = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       if (!token) {
         return;
       }
@@ -29,7 +29,7 @@ export const CartProvider = ({ children }) => {
   useEffect(() => { fetchCart(); }, [fetchCart]);
 
   const addToCart = async (product) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (!token) {
       toast("Please login to add items to cart", { icon: "ℹ️" });
       return;
