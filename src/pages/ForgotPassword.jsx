@@ -65,8 +65,6 @@ export default function ForgotPassword() {
     try {
       const res = await axiosClient.post("/user/forget", { email: email.trim() });
       toast.success(res.data.message || "OTP sent to your email!");
-      // 🔐 Set flag to indicate OTP was sent
-      sessionStorage.setItem("otp_sent_reset", "true");
       setStep(2);
     } catch (err) {
       const errorMsg = err.response?.data?.message || "Failed to send OTP";
@@ -143,8 +141,6 @@ export default function ForgotPassword() {
         confirmPassword: confirmPassword
       });
       toast.success(res.data.message || "Password changed successfully!");
-      // 🔐 Clear the OTP sent flag
-      sessionStorage.removeItem("otp_sent_reset");
       setStep(4);
     } catch (err) {
       const errorMsg = err.response?.data?.message || "Failed to change password";
