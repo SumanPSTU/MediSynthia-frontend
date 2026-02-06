@@ -16,7 +16,6 @@ import ErrorBoundary from '../pages/ErrorBoundary.jsx';
 import AboutUs from '../pages/AboutUs.jsx';
 import Contact from "../pages/Contact.jsx";
 import Faqs from "../pages/Faqs.jsx";
-import OTPRouteGuard from "../components/OTPRouteGuard.jsx";
 import PrivateRoute from "../components/PrivateRoute.jsx";
 
 export default function AppRoutes() {
@@ -34,7 +33,7 @@ export default function AppRoutes() {
         <Route path="/aboutUs" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/faqs" element={<Faqs />} />
-        <Route path="/forgot-password" element={<OTPRouteGuard><ForgotPassword /></OTPRouteGuard>} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         
         {/* Protected Routes */}
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
