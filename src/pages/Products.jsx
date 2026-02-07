@@ -117,7 +117,7 @@ export default function Products() {
       const search = searchQuery.toLowerCase();
       result = result.filter(p => 
         p.productName?.toLowerCase().includes(search) ||
-        p.productGeniric?.toLowerCase().includes(search)
+        p.productGeneric?.toLowerCase().includes(search)
       );
     }
 

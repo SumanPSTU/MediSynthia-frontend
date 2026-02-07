@@ -92,7 +92,7 @@ export default function ProductCard({ product, showDiscountBadge = true }) {
             </h3>
           </Link>
           <p className="text-gray-500 text-xs md:text-sm mt-0.5 line-clamp-1">
-            {product.productGeniric}
+            {product.productGeneric}
           </p>
         </div>
         

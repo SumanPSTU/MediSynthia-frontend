@@ -82,13 +82,13 @@ export default function ProductDetails() {
     if (!product) return;
     try {
       // Search only by generic
-      if (product.productGeniric) {
-        const genericId = typeof product.productGeniric === 'object' 
-          ? product.productGeniric._id 
-          : product.productGeniric;
+      if (product.productGeneric) {
+        const genericId = typeof product.productGeneric === 'object' 
+          ? product.productGeneric._id 
+          : product.productGeneric;
         
         const relatedRes = await axiosClient.get(
-          `/product/getproduct?productGeniric=${genericId}&exclude=${id}&limit=10`
+          `/product/getproduct?productGeneric=${genericId}&exclude=${id}&limit=10`
         );
         
         if (relatedRes.data.success && relatedRes.data.products.length > 0) {
@@ -340,7 +340,7 @@ export default function ProductDetails() {
         {/* ----- Right: Product Info ----- */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-24">
           <h1 className="text-2xl sm:text-3xl font-bold">{product.productName}</h1>
-          <p className="text-gray-500 text-sm sm:text-base">{product.productGeniric}</p>
+          <p className="text-gray-500 text-sm sm:text-base">{product.productGeneric}</p>
 
           <p className="text-gray-500 text-sm sm:text-base">Strength: {product.strength}</p>
           <p className="text-gray-500 text-sm sm:text-base">Dose: {product.dose}</p>
@@ -446,7 +446,7 @@ export default function ProductDetails() {
             {selectedTab === "description" && <p>{product.productDescription}</p>}
             {selectedTab === "specs" && (
               <div className="space-y-2">
-                <p>Generic: {product.productGeniric}</p>
+                <p>Generic: {product.productGeneric}</p>
                 <p>Strength: {product.strength}</p>
                 <p>Dose: {product.dose}</p>
                 <div>
