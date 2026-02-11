@@ -236,7 +236,7 @@ export default function HomePage() {
           <p className="text-center text-gray-500">No products available</p>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-5 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 4xl:grid-cols-8 lg:grid-cols-4 gap-5 md:gap-6">
               {products.map((product) => (
                 <ProductCard key={product._id} product={product} />
               ))}

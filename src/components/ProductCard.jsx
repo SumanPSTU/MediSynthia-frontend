@@ -13,7 +13,6 @@ function ProductImage({ src, alt, className }) {
 
   const handleError = () => {
     if (tried.current.has(src)) {
-      // Already tried this exact URL, try different extensions
       const baseName = src?.replace(/\.[^/.]+$/, '') || '';
       const extensions = ['.png', '.jpg', '.jpeg', '.webp'];
       const currentExt = src?.match(/\.[^/.]+$/)?.[0] || '';
@@ -27,10 +26,9 @@ function ProductImage({ src, alt, className }) {
           return;
         }
       }
-      return; // All extensions tried, show fallback
+      return;
     }
     
-    // First failure - retry same URL with timestamp to bypass cache
     tried.current.add(src);
     setImgSrc(src + (src.includes('?') ? '&' : '?') + 't=' + Date.now());
   };
@@ -41,6 +39,7 @@ function ProductImage({ src, alt, className }) {
       alt={alt || 'Product'}
       className={className}
       onError={handleError}
+      loading="lazy"
     />
   );
 }
@@ -65,17 +64,15 @@ export default function ProductCard({ product, showDiscountBadge = true }) {
   };
 
   return (
-    <div 
-      className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
-    >
+    <div className="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col">
       <Link to={`/product/${product._id}`} className="block">
         <div className="relative overflow-hidden bg-gray-50">
           <ProductImage
             src={product.productImgUrl?.startsWith('http') ? product.productImgUrl : `${BACKEND_URL}${product.productImgUrl}`}
             alt={product.productName}
-            className="w-full h-44 md:h-52 object-cover transform group-hover:scale-105 transition-transform duration-300"
+            className="w-full aspect-[4/3] md:aspect-[3/2] object-cover transform group-hover:scale-105 transition-transform duration-300"
           />
-          {/* Discount Badge Over Image */}
+
           {showDiscountBadge && isOnSale && (
             <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-md">
               {prodDisc}% OFF
@@ -84,21 +81,20 @@ export default function ProductCard({ product, showDiscountBadge = true }) {
         </div>
       </Link>
       
-      <div className="p-3 md:p-4 flex-1 flex flex-col justify-between">
+      <div className="p-3 sm:p-3.5 md:p-4 flex-1 flex flex-col justify-between">
         <div>
           <Link to={`/product/${product._id}`}>
             <h3 className="font-semibold text-gray-800 text-sm md:text-base line-clamp-2 group-hover:text-emerald-600 transition-colors">
               {product.productName}
             </h3>
           </Link>
-          <p className="text-gray-500 text-xs md:text-sm mt-0.5 line-clamp-1">
+          <p className="text-gray-500 text-xs md:text-sm mt-1 line-clamp-1">
             {product.productGeneric}
           </p>
         </div>
         
-        <div className="mt-2">
-          {/* Price Display with Discount */}
-          <div className="flex items-center justify-between mb-2">
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-2.5">
             <div className="flex flex-col">
               {isOnSale ? (
                 <>
@@ -127,8 +123,9 @@ export default function ProductCard({ product, showDiscountBadge = true }) {
           </div>
           
           <button
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleAddToCart}
+            disabled={!product.isAvailable}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -140,4 +137,3 @@ export default function ProductCard({ product, showDiscountBadge = true }) {
     </div>
   );
 }
-

@@ -28,7 +28,9 @@ export default function Navbar() {
   const [loadingSubs, setLoadingSubs] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [searchInput, setSearchInput] = useState("");
   const categoriesRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -89,6 +91,15 @@ export default function Navbar() {
     fetchCategories();
   }, []);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // ✅ Navbar height variable (used for layout offset)
   useEffect(() => {
     const setNavbarHeight = () => {
@@ -109,6 +120,29 @@ export default function Navbar() {
     e.preventDefault();
     const q = e.target.elements.search?.value?.trim();
     if (q) navigate(`/products?search=${encodeURIComponent(q)}`);
+  };
+
+  // Auto search on typing with debouncing
+  const handleSearchChange = (value) => {
+    setSearchInput(value);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // If input is empty, navigate to home
+    if (!value.trim()) {
+      navigate("/");
+      return;
+    }
+
+    // Debounce search by 500ms to avoid too many requests
+    searchTimeoutRef.current = setTimeout(() => {
+      if (value.trim()) {
+        navigate(`/products?search=${encodeURIComponent(value.trim())}`);
+      }
+    }, 500);
   };
 
   const onUploadSuccess = (prescription) => {
@@ -163,6 +197,8 @@ export default function Navbar() {
               <input
                 name="search"
                 type="search"
+                value={searchInput}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search medicines, symptoms or brands..."
                 className="w-full px-4 py-2 border border-gray-200 rounded-l-full focus:ring-2 focus:ring-emerald-300 outline-none shadow-sm"
               />
@@ -353,6 +389,8 @@ export default function Navbar() {
             <input
               name="search"
               type="search"
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search medicines..."
               className="w-full px-4 py-2 border border-gray-200 rounded-l-full focus:ring-2 focus:ring-emerald-300 outline-none"
             />

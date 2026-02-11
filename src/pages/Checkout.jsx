@@ -209,15 +209,23 @@ export default function CheckoutPage() {
         return `ORD${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       };
       
+      // Ensure all items have required fields
+      const orderItems = selectedItems.map(item => {
+        if (!item.productId && !item._id) {
+          throw new Error(`Item "${item.name}" is missing product ID`);
+        }
+        return {
+          productId: item._id || item.productId,
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          name: item.name || "Unnamed Product",
+          image: item.image || ""
+        };
+      });
+      
       const res = await axiosClient.post("/order/orders", {
         orderId: generateOrderId(),
-        items: selectedItems.map(item => ({
-          productId: item._id || item.id,
-          quantity: item.quantity,
-          price: item.price,
-          name: item.name,
-          image: item.image
-        })),
+        items: orderItems,
         shippingAddress: formattedAddress,
         paymentMethod: "cash_on_delivery"
       }, {
@@ -225,19 +233,13 @@ export default function CheckoutPage() {
       });
 
       if (res.data.success) {
-        const removeOrderedItemsFromCart = async () => {
-          const itemIds = selectedItems
-            .map(item => item._id || item.id)
-            .filter(Boolean);
-          if (itemIds.length === 0) return;
-
-          await Promise.allSettled(
-            itemIds.map(itemId => axiosClient.delete(`/cart/item/${itemId}`))
-          );
+        // Cart removal is now handled on backend, but refresh cart to be safe
+        try {
           await fetchCart();
-        };
+        } catch (cartErr) {
+          console.warn("Cart refresh failed (non-critical):", cartErr);
+        }
 
-        await removeOrderedItemsFromCart();
         const orderDetails = {
           orderId: res.data.order?.orderId || res.data.order?._id || `ORD${Date.now()}`,
           totalAmount: total,
