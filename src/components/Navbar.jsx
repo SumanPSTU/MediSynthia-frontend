@@ -17,6 +17,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const { cart } = useCart();
   const { isAuthenticated, logout } = useAuth();
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -31,9 +32,7 @@ export default function Navbar() {
   const [searchInput, setSearchInput] = useState("");
   const categoriesRef = useRef(null);
   const searchTimeoutRef = useRef(null);
-
-  const navigate = useNavigate();
-
+  const [searchValue, setSearchValue] = useState("");
   // Default avatar
   const defaultAvatar = "https://i.pravatar.cc/40?img=68";
 
@@ -89,15 +88,6 @@ export default function Navbar() {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
   }, []);
 
   // ✅ Navbar height variable (used for layout offset)
