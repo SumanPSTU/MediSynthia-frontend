@@ -124,7 +124,7 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
     const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
     const newSocket = io(BACKEND_URL, {
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -132,6 +132,9 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
       timeout: 20000,
       forceNew: false,
       autoConnect: true,
+      auth: {
+        token: token
+      }
     });
 
     newSocket.on("connect", () => {
