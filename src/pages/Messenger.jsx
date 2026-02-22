@@ -140,8 +140,10 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
     newSocket.on("connect", () => {
       setIsConnected(true);
       setRetryCount(0);
+      console.log('[User Messenger] Socket connected:', newSocket.id, 'transport:', newSocket.io.engine.transport.name);
 
       if (userId) {
+        console.log('[User Messenger] Joining room:', userId);
         newSocket.emit("joinUser", userId);
         newSocket.emit("checkAdminStatus");
       }
@@ -151,6 +153,7 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
 
     newSocket.on("connect_error", (err) => {
       setIsConnected(false);
+      console.error('[User Messenger] Socket connection error:', err);
     });
 
     newSocket.on("connect_timeout", () => {
@@ -423,7 +426,10 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
     e.preventDefault();
 
     const messageText = newMessage.trim();
-    if (!messageText || !userId) return;
+    if (!messageText || !userId) {
+      console.warn('[User Messenger] Cannot send. messageText:', !!messageText, 'userId:', userId);
+      return;
+    }
 
     const messageData = {
       senderId: userId,
@@ -432,10 +438,12 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
       senderType: "user",
     };
 
+    console.log('[User Messenger] Sending message:', messageData, 'isConnected:', isConnected);
     if (isConnected && socket) {
       setSending(true);
       socket.emit("sendDirectMessage", messageData);
     } else {
+      console.log('[User Messenger] Offline - queueing message');
       setOfflineQueue(prev => [...prev, messageData]);
     }
 
@@ -449,7 +457,7 @@ export default function Messenger({ isOpen, onClose, onNewMessage, onChatOpen })
     setMessages(prev => [...prev, tempMsg]);
 
     setNewMessage("");
-  }, [newMessage, socket, userId, isConnected]);
+  }, [newMessage, socket, userId, isConnected, adminId]);
 
   const clearChat = () => {
     if (window.confirm("Clear chat history?")) {
