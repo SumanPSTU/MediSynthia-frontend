@@ -158,13 +158,13 @@ export default function HomePage() {
   return (
     <div>
       {/* -------------------- Hero Slider -------------------- */}
-      <div className="relative max-w-full mx-auto px-4 sm:px-6 lg:px-8 lg:mt-8 mt-4">
+      <div className="relative max-w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16 lg:mt-8 mt-4 ">
         {ads?.length > 0 ? (
-          <div className="relative overflow-hidden rounded-lg shadow-lg">
+          <div className="relative w-full  mx-auto aspect-[7/3] lg:aspect-[9/2] overflow-hidden rounded-lg shadow-lg">
             <img
               src={`${BACKEND_URL}${ads[currentAd].addImgUrl}`}
               alt={ads[currentAd].addDescription || `Ad ${currentAd + 1}`}
-              className="w-full h-38 sm:h-76 lg:max-h-80 object-fill transition-all duration-700"
+              className="w-full h-full object-fill transition-all duration-700"
             />
             <button
               onClick={prevAd}
@@ -196,7 +196,7 @@ export default function HomePage() {
 
       {/* -------------------- Categories -------------------- */}
       <div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 mt-5">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-14 xl:px-20 2xl:px-28 mt-5">
           <h2 className="text-xl font-bold mb-1">Shop by Category</h2>
 
           {loadingCategories ? (
@@ -214,7 +214,7 @@ export default function HomePage() {
                   <img
                     src={`${BACKEND_URL}${cat.imageUrl}`}
                     alt={cat.name}
-                    className="w-20 h-20 rounded-full object-cover shadow-md"
+                    className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 2xl:w-20 2xl:h-20  rounded-full object-cover shadow-md"
                   />
                   <span className="text-sm font-medium whitespace-nowrap">{cat.name}</span>
                 </Link>
@@ -225,7 +225,7 @@ export default function HomePage() {
       </div>
 
       {/* -------------------- Products with Infinite Scroll -------------------- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 mt-6">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-14 xl:px-20 2xl:px-28 mt-6">
         <h2 className="text-xl font-bold mb-4">Featured Products</h2>
         
         {loading ? (

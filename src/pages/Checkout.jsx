@@ -13,7 +13,6 @@ export default function CheckoutPage() {
   const { fetchCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
-  const [step, setStep] = useState(1);
   const [userInfo, setUserInfo] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
@@ -317,61 +316,42 @@ export default function CheckoutPage() {
           </span>
         </div>
 
-        {/* Step Indicator */}
-        <div className="flex justify-between mb-4 md:mb-6 overflow-x-auto pb-2">
-          {["Shipping", "Review"].map((label, i) => (
-            <div key={i} className="flex-1 text-center min-w-[100px]">
-              <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center font-semibold transition-all ${
-                step > i + 1 ? "bg-emerald-600 text-white" : 
-                step === i + 1 ? "bg-emerald-500 text-white scale-110" : "bg-gray-200 text-gray-600"
-              }`}>
-                {step > i + 1 ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (i + 1)}
-              </div>
-              <p className="mt-2 text-xs md:text-sm font-medium truncate">{label}</p>
-            </div>
-          ))}
-        </div>
-
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
           <div className="xl:col-span-3 space-y-4 md:space-y-6">
-            {/* Step 1: Shipping (Products + Address) */}
-            {step === 1 && (
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-4 md:p-6 border-b bg-gray-50">
-                  <h2 className="text-lg md:text-xl font-bold text-gray-800">Order Items & Delivery Address</h2>
-                </div>
+            {/* Combined: Shipping & Review */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-4 md:p-6 border-b bg-gray-50">
+                <h2 className="text-lg md:text-xl font-bold text-gray-800">Order Items & Delivery Address</h2>
+              </div>
 
-                {/* Products Section */}
-                <div className="p-4 md:p-6 border-b">
-                  <h3 className="text-base md:text-lg font-semibold mb-4 text-gray-700">Items for Order</h3>
-                  <div className="space-y-3">
-                    {selectedItems.map((item) => (
-                      <div key={item._id || item.id} className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-xl">
-                        <div className="flex-shrink-0">
-                          {getImageUrl(item.image) ? (
-                            <img src={getImageUrl(item.image)} alt={item.name} className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover shadow-sm" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                          ) : null}
-                          <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-emerald-50 flex items-center justify-center shadow-sm" style={{ display: getImageUrl(item.image) ? 'none' : 'flex' }}>
-                            <ShoppingBag className="w-8 h-8 md:w-10 md:h-10 text-emerald-400" />
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0 text-center sm:text-left">
-                          <p className="font-medium text-gray-900 text-sm md:text-base truncate">{item.name}</p>
-                          <p className="text-xs md:text-sm text-gray-500">Qty: {item.quantity}</p>
-                          <p className="text-emerald-600 font-semibold text-sm">৳{(item.price * item.quantity).toFixed(2)}</p>
+              {/* Products Section */}
+              <div className="p-4 md:p-6 border-b">
+                <h3 className="text-base md:text-lg font-semibold mb-4 text-gray-700">Items for Order</h3>
+                <div className="space-y-3">
+                  {selectedItems.map((item) => (
+                    <div key={item._id || item.id} className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-xl">
+                      <div className="flex-shrink-0">
+                        {getImageUrl(item.image) ? (
+                          <img src={getImageUrl(item.image)} alt={item.name} className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover shadow-sm" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                        ) : null}
+                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-emerald-50 flex items-center justify-center shadow-sm" style={{ display: getImageUrl(item.image) ? 'none' : 'flex' }}>
+                          <ShoppingBag className="w-8 h-8 md:w-10 md:h-10 text-emerald-400" />
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex-1 min-w-0 text-center sm:text-left">
+                        <p className="font-medium text-gray-900 text-sm md:text-base truncate">{item.name}</p>
+                        <p className="text-xs md:text-sm text-gray-500">Qty: {item.quantity}</p>
+                        <p className="text-emerald-600 font-semibold text-sm">৳{(item.price * item.quantity).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                {/* Address Selection */}
-                <div className="p-4 md:p-6 border-b">
-                  <h3 className="text-base md:text-lg font-semibold mb-4 text-gray-700">Delivery Address</h3>
+              {/* Address Selection */}
+              <div className="p-4 md:p-6 border-b">
+                <h3 className="text-base md:text-lg font-semibold mb-4 text-gray-700">Delivery Address</h3>
+
                   
                   <div className="space-y-3">
                     {/* Home Address Option */}
@@ -548,64 +528,16 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
-                {/* Continue Button */}
-                <div className="p-4 md:p-6 border-t bg-gray-50 flex justify-end">
-                  <button 
-                    onClick={() => setStep(2)}
-                    disabled={!selectedAddress}
-                    className={`flex items-center gap-2 px-5 py-3 md:px-6 md:py-4 rounded-xl shadow font-medium text-sm md:text-base transition ${
-                      !selectedAddress 
-                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                    }`}
-                  >
-                    Review Order <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Review Order */}
-            {step === 2 && (
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-4 md:p-6 border-b bg-gray-50">
-                  <h2 className="text-lg md:text-xl font-bold text-gray-800">Review Your Order</h2>
-                </div>
-
-                {/* Shipping Address */}
+                {/* Order Summary Section */}
                 <div className="p-4 md:p-6 border-b">
                   <div className="flex items-center gap-2 mb-3">
                     <MapPin className="w-5 h-5 text-emerald-600" />
-                    <h3 className="font-semibold text-gray-700">Delivery Address</h3>
+                    <h3 className="font-semibold text-gray-700">Delivery Summary</h3>
                   </div>
                   <div className="bg-gradient-to-br from-emerald-50 to-blue-50 p-4 rounded-2xl text-sm md:text-base text-gray-700 border border-emerald-200">
                     <p className="font-medium text-gray-900 mb-2">{selectedAddress?.street}</p>
                     <p className="text-gray-600">{selectedAddress?.city}, {selectedAddress?.state} {selectedAddress?.zipCode}</p>
                     <p className="text-gray-600">{selectedAddress?.country}</p>
-                  </div>
-                </div>
-
-                {/* Order Items */}
-                <div className="p-4 md:p-6 border-b">
-                  <h3 className="font-semibold text-gray-700 mb-3">Order Items</h3>
-                  <div className="space-y-3">
-                    {selectedItems.map((item) => (
-                      <div key={item._id || item.id} className="flex items-center gap-3 md:gap-4">
-                        <div className="flex-shrink-0">
-                          {getImageUrl(item.image) ? (
-                            <img src={getImageUrl(item.image)} alt={item.name} className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover shadow-sm" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                          ) : null}
-                          <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-emerald-50 flex items-center justify-center shadow-sm" style={{ display: getImageUrl(item.image) ? 'none' : 'flex' }}>
-                            <ShoppingBag className="w-8 h-8 text-emerald-400" />
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-800 truncate text-sm md:text-base">{item.name}</p>
-                          <p className="text-xs md:text-sm text-gray-500">Qty: {item.quantity}</p>
-                        </div>
-                        <span className="font-semibold text-emerald-700 text-sm md:text-base">৳{(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
                   </div>
                 </div>
 
@@ -630,12 +562,11 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="p-4 md:p-6 border-t bg-gray-50 flex flex-col sm:flex-row justify-between gap-3">
-                  <button onClick={() => setStep(1)} className="px-5 py-3 border border-gray-300 rounded-xl shadow hover:bg-gray-100 transition font-medium text-sm md:text-base">Back</button>
+                <div className="p-4 md:p-6 border-t bg-gray-50 flex justify-end">
                   <button onClick={() => setShowConfirm(true)} className="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 text-white rounded-xl shadow hover:bg-emerald-700 transition-all duration-200 font-medium text-sm md:text-base">Place Order <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg></button>
                 </div>
               </div>
-            )}
+            
           </div>
 
           {/* Order Summary Sidebar */}
