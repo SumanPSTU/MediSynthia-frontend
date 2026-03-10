@@ -23,7 +23,6 @@ export const setupTokenRefresh = (refreshFunction) => {
 
   // Schedule token refresh 9 minutes after login (1 minute before expiration)
   refreshTimeout = setTimeout(() => {
-    console.log('Token expiring soon, refreshing...');
     refreshFunction();
     
     // Re-setup for next refresh

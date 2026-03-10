@@ -7,7 +7,7 @@ import ProductCard from "../components/ProductCard";
 
 // Get backend URL from axiosClient configuration
 const BACKEND_URL = axiosClient.defaults.baseURL || "http://localhost:3000";
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 100;
 
 export default function HomePage() {
   // ----- Ads -----
