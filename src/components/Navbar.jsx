@@ -145,8 +145,8 @@ export default function Navbar() {
     
     const rect = event.currentTarget.getBoundingClientRect();
     setDropdownPosition({
-      top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX
+      top: rect.bottom,
+      left: rect.left
     });
     setActiveDropdown(categoryId);
   };
@@ -247,7 +247,7 @@ export default function Navbar() {
           {/* Left Scroll Button */}
           <button
             onClick={() => scrollCategories('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-1 hover:bg-gray-100 transition hidden md:block"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-1 hover:bg-gray-100 hover:shadow-xl transition-all hidden md:block"
             style={{ marginLeft: '0.5rem' }}
           >
             <ChevronLeft className="w-5 h-5 text-emerald-600" />
@@ -256,7 +256,7 @@ export default function Navbar() {
           {/* Right Scroll Button */}
           <button
             onClick={() => scrollCategories('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-1 hover:bg-gray-100 transition hidden md:block"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-1 hover:bg-gray-100 hover:shadow-xl transition-all hidden md:block"
             style={{ marginRight: '0.5rem' }}
           >
             <ChevronRight className="w-5 h-5 text-emerald-600" />
@@ -285,9 +285,13 @@ export default function Navbar() {
                       className="flex items-center gap-1 px-3 py-2 rounded-md text-gray-700 hover:bg-emerald-100 transition text-sm font-medium whitespace-nowrap"
                     >
                       <span>{cat.name}</span>
-                      {(subcategories[cat._id] && subcategories[cat._id].length > 0) || loadingSubs ? (
-                        <ChevronDown className="w-3 h-3 text-gray-500" />
-                      ) : null}
+                      <ChevronDown 
+                        className={`w-3 h-3 transition-all duration-200 ${
+                          (subcategories[cat._id] && subcategories[cat._id].length > 0) || loadingSubs
+                            ? 'opacity-100 visible text-gray-500'
+                            : 'opacity-0 invisible'
+                        }`}
+                      />
                     </Link>
                   </div>
                 ))

@@ -302,7 +302,7 @@ export default function Products() {
           <p className="text-sm text-gray-500 mb-6">
             Showing {currentProducts.length} of {filteredProducts.length} products
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-5 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 md:gap-6">
             {currentProducts.map((product) => (
               <ProductCard key={product._id} product={product} />
             ))}
